@@ -1,6 +1,6 @@
 # 4. The OFFSETS tab
 
-<!-- shot: offsets-tab -->
+![OFFSETS tab](images/offsets-tab.jpg)
 
 Chapter 1 explains what a work offset is. This chapter is the screen.
 

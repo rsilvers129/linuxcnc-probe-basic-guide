@@ -15,6 +15,7 @@
 <h3>Wiring note: normally open vs normally closed</h3>
 <p>A normally-open (NO) probe reads "not triggered" when it is unplugged or its cable is broken. Probe Basic will then drive it into the part until the stylus overtravel limit or a crash. Tap-test the probe before every probing session. A normally-closed (NC) probe fails safe, which is why industrial probes use NC.</p>
 <h3>Calibration (CALIBRATE page)</h3>
+<p><img alt="CALIBRATE page: calibration offset 0.047144 from a 24.995 mm ring gauge" src="images/probing-calibrate.jpg" /></p>
 <p>The ball triggers a little before its surface actually touches. That's the "pretravel", and it makes the ball's effective diameter slightly smaller than the real one. Calibration measures this once:</p>
 <ol>
 <li>Clamp a ring gauge (or any precisely known bore) to the table.</li>
@@ -121,6 +122,7 @@
 <li>For routines that step off an edge, start <strong>within STEP OFF WIDTH of that edge, measured inward</strong>. The probe moves out by the step-off width, drops, and touches back toward you. Start too far in, and it drops onto the top of the part.</li>
 </ul>
 <h3>OUTSIDE CORNERS</h3>
+<p><img alt="OUTSIDE CORNERS page" src="images/probing-outside-corners.jpg" /></p>
 <p>A 3×3 grid of buttons:</p>
 <ul>
 <li><strong>Four corners</strong>: each touches the top (Z), then the two edges that meet at that corner, and sets X, Y and Z zero on that corner. Start over the part near the chosen corner, within step-off width of both edges.</li>
@@ -128,8 +130,10 @@
 <li><strong>The center button</strong>: touches Z only.</li>
 </ul>
 <h3>INSIDE CORNERS</h3>
+<p><img alt="INSIDE CORNERS page" src="images/probing-inside-corners.jpg" /></p>
 <p>The same idea inside a pocket or against a fixture's inside corner, plus single-direction X+/X−/Y+/Y− touches and a Z touch. Start inside, below the top edge, within MAX X/Y DISTANCE of the walls.</p>
 <h3>BOSS AND POCKET</h3>
+<p><img alt="BOSS AND POCKET page, with the X 200 / Y 69 hints from the plywood test" src="images/probing-boss-pocket.jpg" /></p>
 <p>Six buttons in two rows:</p>
 <table>
 <thead>
@@ -158,6 +162,7 @@
 <h3>RIDGE AND VALLEY</h3>
 <p>Finds the center of a rib (ridge) or a slot (valley), in X or in Y, with its own X/Y hints. Use it for the center of a T-slot, a keyway or a narrow bar.</p>
 <h3>EDGE ANGLE</h3>
+<p><img alt="EDGE ANGLE page with SET ROTATION WCO and EDGE WIDTH" src="images/probing-edge-angle.jpg" /></p>
 <p>Touches one edge at two points, EDGE WIDTH apart, and reports the angle (EDGE ∠) and the offset between the touches (EDGE Δ). Use it to check that a vise or part is square to the axes. <strong>SET ROTATION WCO</strong> stores the angle as the work offset's rotation (the R column on the OFFSETS tab), so programs run rotated to match a part that is clamped crooked.</p>
 <blockquote>
 <p><strong>On the 6040.</strong> Two edge-angle readings on a glued-down 1-2-3 block, plus two RECT BOSS measurements in both orientations, showed the X axis measuring 0.323 % long. The ballscrew's lead was slightly under 5 mm. X SCALE was corrected from 320 to 321.034 steps/mm, and the block then measured right to 0.001 mm. A probe and a gauge block make a cheap machine calibration kit.</p>
@@ -165,6 +170,7 @@
 <h3>ROTARY AXIS</h3>
 <p>Probing routines for a 4th axis: centering on a cylinder in the rotary chuck.</p>
 <h3>PROBE HELP</h3>
+<p><img alt="PROBE HELP page" src="images/probing-help.jpg" /></p>
 <p>Pages of built-in diagrams for every routine (PREV PAGE / NEXT PAGE). Worth reading once.</p>
 <h2>A good probing habit</h2>
 <ol>

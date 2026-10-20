@@ -6,7 +6,7 @@ A tool setter is a switch at a fixed spot on the table. Lowering a cutter onto i
 
 ## One-time setup (PROBING → TOOL SETTER)
 
-<!-- shot: tool-setter-tab -->
+![TOOL SETTER sub-tab: SPINDLE ZERO 49.1901, touch-off position X 350 Y 515](images/tool-setter-tab.jpg)
 
 ### 1. Wire it to the probe input
 

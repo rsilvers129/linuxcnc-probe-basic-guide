@@ -3,14 +3,17 @@
 <title>2. A tour of the screen</title><link rel="stylesheet" href="assets/style.css"></head>
 <body><header class="top"><a href="index.html">Probe Basic, Explained</a></header>
 <main><h1>2. A tour of the screen</h1>
-<p>Probe Basic's window has two parts:</p>
+<p><img alt="Probe Basic's MAIN tab during a job" src="images/main-tab.jpg" /></p>
+<p>Probe Basic's window has three parts:</p>
 <ul>
-<li><strong>The top area</strong> changes with the tab you pick: MAIN, FILE, TOOL, OFFSETS, PROBING, CONVERSATIONAL, SETTINGS and STATUS. ATC and USER tabs appear when they are enabled.</li>
-<li><strong>The control strip along the bottom</strong> never changes. It holds everything you need while a program runs.</li>
+<li><strong>The upper area</strong> changes with the tab you pick in the tab bar: MAIN, FILE, TOOL, OFFSETS, PROBING, CONVERSATIONAL, SETTINGS, STATUS, plus USER MAIN (and ATC, when enabled).</li>
+<li><strong>The right column</strong> is the same on every tab: jog arrows for each axis, the <strong>MAN / AUTO / MDI</strong> mode buttons, and <strong>MACHINE STATUS</strong>. MACHINE STATUS lists the active G and M codes (G54, G43, G90 and so on), which is handy for checking that G43 is really on.</li>
+<li><strong>The control strip</strong> along the bottom never changes. It holds everything you need while a program runs.</li>
 </ul>
 <h2>The bottom control strip</h2>
-<p>Learn this strip first; it is where you spend most of your time.</p>
-<h3>Program control (left)</h3>
+<p><img alt="The control strip" src="images/control-strip.jpg" /></p>
+<p>Learn this strip first. From left to right:</p>
+<h3>Program control</h3>
 <table>
 <thead>
 <tr>
@@ -21,39 +24,55 @@
 <tbody>
 <tr>
 <td><strong>CYCLE START</strong></td>
-<td>Runs the loaded program, or resumes after FEED HOLD. It is greyed out until the machine is on, homed, idle and has a program loaded.</td>
+<td>Runs the loaded program, or resumes after FEED HOLD or an <code>M1</code> pause. It is greyed out until the machine is on, homed and idle, with a program loaded.</td>
 </tr>
 <tr>
 <td><strong>STOP</strong></td>
-<td>Aborts the program. You lose your place; restarting mid-program needs RUN FROM LINE.</td>
+<td>Aborts the program. You lose your place.</td>
+</tr>
+<tr>
+<td><strong>RELOAD PGM</strong></td>
+<td>Re-reads the program file from disk. Use it after editing or re-posting the file.</td>
 </tr>
 <tr>
 <td><strong>FEED HOLD</strong></td>
-<td>Freezes motion immediately and keeps your place. The <strong>spindle keeps running.</strong> Press CYCLE START to continue.</td>
+<td>Freezes motion and keeps your place. <strong>The spindle keeps running.</strong> CYCLE START continues; while paused, a blinking RESUME shows.</td>
+</tr>
+<tr>
+<td><strong>CLEAR PGM</strong></td>
+<td>Unloads the program.</td>
 </tr>
 <tr>
 <td><strong>SINGLE BLOCK</strong></td>
-<td>When lit, each CYCLE START runs one line. Good for stepping through the start of a new program.</td>
+<td>When lit, each CYCLE START runs one line.</td>
+</tr>
+<tr>
+<td><strong>FLOOD</strong></td>
+<td>Flood coolant on/off.</td>
 </tr>
 <tr>
 <td><strong>BLOCK DELETE</strong></td>
-<td>When lit, lines that start with <code>/</code> are skipped.</td>
+<td>When lit, lines starting with <code>/</code> are skipped.</td>
+</tr>
+<tr>
+<td><strong>Z TOUCH PLATE</strong></td>
+<td><em>On the 6040:</em> a custom user button that runs the touch-plate Z zero (<code>touch_plate.ngc</code>). Stock Probe Basic has MIST here.</td>
 </tr>
 <tr>
 <td><strong>M01 BREAK</strong></td>
-<td>When lit, the program stops at every <code>M1</code> (optional stop). Fusion 360 often puts an <code>M1</code> before tool changes.</td>
+<td>When lit, the program pauses at every <code>M1</code> (optional stop). Fusion 360 puts one before tool changes.</td>
 </tr>
 <tr>
 <td><strong>POWER</strong></td>
-<td>Machine on/off (after the E-stop is released).</td>
-</tr>
-<tr>
-<td><strong>E-STOP</strong></td>
-<td>Software E-stop toggle. Your physical E-stop button is separate and always wins.</td>
+<td>Machine on/off, green when on. Toggling it also makes Probe Basic re-check its state.</td>
 </tr>
 <tr>
 <td>Timer</td>
 <td>Running time of the current program.</td>
+</tr>
+<tr>
+<td><strong>E-STOP</strong></td>
+<td>Software E-stop: red = OK, grey = E-stopped. Your physical E-stop button always overrides it.</td>
 </tr>
 </tbody>
 </table>
@@ -68,11 +87,11 @@
 <tbody>
 <tr>
 <td><strong>T</strong> box + <strong>M6 G43</strong></td>
-<td>Type a tool number and press it: tool change to that tool, then apply its length. Use it for the probe (T99) and for manual tool loads.</td>
+<td>Type a tool number and press it: tool change to that tool, then apply its length. Use it to load the probe (T99).</td>
 </tr>
 <tr>
 <td><strong>G43 / G49</strong></td>
-<td>Turn the tool length offset on or off. The lit one is active.</td>
+<td>Tool length offset on/off. The lit one is active.</td>
 </tr>
 <tr>
 <td><strong>LENGTH / DIAM</strong></td>
@@ -80,11 +99,11 @@
 </tr>
 <tr>
 <td><strong>GO TO ZERO</strong></td>
-<td>Moves to the work zero: Z up first, then X0 Y0.</td>
+<td>Lifts Z, then moves to work X0 Y0.</td>
 </tr>
 <tr>
 <td><strong>GO TO G30</strong></td>
-<td>Moves to the stored G30 position. Probe Basic uses it as the tool-setter position.</td>
+<td>Moves to the stored G30 position (the tool-setter position).</td>
 </tr>
 <tr>
 <td><strong>GO TO HOME</strong></td>
@@ -93,7 +112,6 @@
 </tbody>
 </table>
 <h3>Position readout (DRO)</h3>
-<p>One row per axis:</p>
 <table>
 <thead>
 <tr>
@@ -104,11 +122,11 @@
 <tbody>
 <tr>
 <td><strong>ZERO X / Y / Z / A</strong></td>
-<td>Makes the current position zero in the active work offset. It <strong>moves your work zero</strong>, so don't press it by accident.</td>
+<td>Makes the current position zero in the active work offset. <strong>It moves your work zero.</strong></td>
 </tr>
 <tr>
 <td><strong>G54 WORK</strong></td>
-<td>Position relative to the part. That is the tool tip, if G43 is on.</td>
+<td>Position relative to the part. With G43 on, that is the tool tip. The header shows the active offset.</td>
 </tr>
 <tr>
 <td><strong>MACHINE</strong></td>
@@ -120,16 +138,20 @@
 </tr>
 <tr>
 <td><strong>REF X / Y / Z / A</strong></td>
-<td>Homes that axis. <strong>REF ALL</strong> homes everything; when done, the button reads <strong>HOMED</strong>.</td>
+<td>Homes that axis.</td>
 </tr>
 <tr>
 <td><strong>ZERO ALL</strong></td>
 <td>Zeroes all axes at the current spot.</td>
 </tr>
+<tr>
+<td><strong>REF ALL / HOMED</strong></td>
+<td>Homes everything, then reads HOMED.</td>
+</tr>
 </tbody>
 </table>
 <h3>Overrides</h3>
-<p>Four sliders, each with a button that snaps back to 100 %:</p>
+<p>The top bar is <strong>SPINDLE LOAD</strong>. Below it are four sliders, each with a button that snaps it back to 100 %:</p>
 <table>
 <thead>
 <tr>
@@ -139,53 +161,73 @@
 </thead>
 <tbody>
 <tr>
-<td><strong>F</strong></td>
-<td>Feed override: scales every cutting feed. Turn it down for the first plunge of a new program, up once you trust it.</td>
+<td><strong>V</strong></td>
+<td>Maximum velocity for all moves. The number shows the limit in mm/min (2800 on the reference machine).</td>
 </tr>
 <tr>
-<td><strong>R</strong></td>
-<td>Rapid override.</td>
+<td><strong>F</strong></td>
+<td>Feed override: scales every cutting feed. Turn it down for the first plunge of a new program.</td>
 </tr>
 <tr>
 <td><strong>S</strong></td>
 <td>Spindle speed override.</td>
 </tr>
 <tr>
-<td><strong>V</strong></td>
-<td>Maximum velocity for all moves.</td>
+<td><strong>R</strong></td>
+<td>Rapid override.</td>
 </tr>
 </tbody>
 </table>
-<p>The <strong>spindle load</strong> bar shows spindle load when the machine reports it.</p>
-<h3>Spindle and jog</h3>
+<h3>Jog and spindle (right)</h3>
 <ul>
-<li><strong>FWD / STOP / REV</strong> run the spindle manually at the default speed.</li>
-<li>The <strong>JOG</strong> panel has continuous and step jogging (1, 0.1, 0.01 mm on the reference machine).</li>
-<li>The <strong>JOG / WCS / PLOT / USER</strong> sub-tabs switch the small panel between jog buttons, work-offset buttons, preview options and user buttons.</li>
-<li><strong>MAN / AUTO / MDI</strong> select the machine mode. Probe Basic usually switches for you.</li>
+<li><strong>JOG</strong> turns keyboard and on-screen jogging on. <strong>1.0 / 0.1 / 0.01</strong> pick a step size; with none lit, jogging is continuous.</li>
+<li>The <strong>slider</strong> sets the jog speed, as a percentage of maximum.</li>
+<li><strong>FEEDRATE MM/M</strong>: actual feed on the left, programmed F on the right.</li>
+<li><strong>SPINDLE RPM</strong>: actual rpm on the left, commanded S on the right. On the reference machine, actual rpm is read from the VFD over Modbus.</li>
+<li><strong>REV / STOP / FWD</strong> run the spindle by hand.</li>
 </ul>
+<p>At the right end of the tab bar, <strong>JOG / WCS / PLOT / USER SB</strong> switch this small panel between jog controls, work-offset buttons, preview options and user buttons.</p>
 <h2>The tabs</h2>
 <h3>MAIN</h3>
-<p>The 3D toolpath preview (backplot) and the G-code listing. Preview buttons: ISO / X / Y / Z views, PAN, ZOOM ±, PGM EXT (fit the program), MCH EXT (fit the machine), PATH and CLEAR (the live tool trail), ORTHO/PSPECT.</p>
-<p>The <strong>MDI</strong> sub-page has a keypad, MDI history and RUN FROM LINE controls. <strong>RUN FROM LINE does not restore the state before that line</strong>: position, feeds, work offset, tool, tool length, spindle. Only use it at the start of an operation, where the program sets all of those itself.</p>
+<p>The program listing (left), the 3D toolpath preview (center) and the right column. Along the top of the listing:</p>
+<ul>
+<li><strong>FIND M6</strong> finds tool changes in the program.</li>
+<li>The line-number box and <strong>SET QUE</strong> are for <strong>run from line</strong>.</li>
+</ul>
+<p><strong>GCODE / MDI</strong> switch the left panel between the program and the MDI keypad, history and queue. Preview buttons: ISO / X / Y / Z VIEW, PAN, ZOOM ±, PGM EXT (fit the program), MCH EXT (fit the machine), PATH and CLEAR (the live tool trail), ORTHO / PSPECT.</p>
+<blockquote>
+<p><strong>Run from line</strong> doesn't replay what came before that line: position, feed, work offset, tool, tool length, spindle. Start only at the beginning of an operation, where the program sets all of those itself.</p>
+</blockquote>
 <h3>FILE</h3>
-<p>The file browser for your <code>nc_files</code> folder and USB sticks. <strong>LOAD G-CODE</strong> opens a program. <strong>TO PC / TO USB</strong> copy files. There is also a built-in G-code editor (EDIT G-CODE, FIND/REPLACE, SAVE AS).</p>
+<p><img alt="FILE tab" src="images/file-tab.jpg" /></p>
+<p>Two file browsers, for USB on the left and the PC's <code>nc_files</code> on the right, with <strong>LOAD G-CODE</strong>, TO PC / TO USB, NEW FILE / NEW FOLDER / RENAME / DELETE. The right side is a <strong>G-code editor</strong>: EDIT G-CODE, FIND/REPLACE, SAVE, SAVE AS, UNDO.</p>
 <h3>TOOL</h3>
-<p>The tool table, plus two panels:</p>
+<p><img alt="TOOL tab" src="images/tool-tab.jpg" /></p>
+<p>The tool table on the left; chapter 7 covers it. On the right:</p>
 <ul>
-<li><strong>Tool change panel</strong>: <strong>M6 G43</strong> for a tool number. <strong>LOAD SPINDLE / UNLOAD SPINDLE</strong> are for ATC machines.</li>
-<li><strong>Electronic tool setter</strong>: <strong>TOUCH OFF CURRENT TOOL</strong> measures the loaded tool on the setter. See chapter 6.</li>
+<li>the selected tool's picture with its length, diameter and comment,</li>
+<li>the <strong>TOOL CHANGE PANEL</strong> (a tool number + <strong>M6 G43</strong>; LOAD/UNLOAD SPINDLE are for ATCs),</li>
+<li><strong>ELECTRONIC TOOL SETTER → TOUCH OFF CURRENT TOOL</strong> (chapter 6).</li>
 </ul>
-<p>Table columns: tool number, pocket, Z (length), diameter, remark, and an <strong>ATC</strong> checkbox. ATC only matters with an automatic tool changer: it marks tools that fit in the carousel, and does nothing on a manual-change machine. <strong>SAVE TABLE</strong> commits your edits.</p>
 <h3>OFFSETS</h3>
-<p>All nine work offsets as a table, plus the current one broken down. See chapter 4.</p>
+<p><img alt="OFFSETS tab" src="images/offsets-tab.jpg" /></p>
+<p>All nine work offsets, plus a breakdown of the current position. See chapter 4.</p>
 <h3>PROBING</h3>
-<p>Two sub-tabs:</p>
+<p><img alt="PROBING tab, BOSS AND POCKET page" src="images/probing-boss-pocket.jpg" /></p>
+<p>The probing suite, with two vertical sub-tabs on the right edge: <strong>TOUCH PROBE</strong> and <strong>TOOL SETTER</strong>.</p>
 <ul>
-<li><strong>TOUCH PROBE</strong>: the probing parameters, the PROBE RESULTS panel, and the routine pages: OUTSIDE CORNERS, INSIDE CORNERS, BOSS AND POCKET, RIDGE AND VALLEY, EDGE ANGLE, ROTARY AXIS, CALIBRATE and PROBE HELP. See chapter 5.</li>
-<li><strong>TOOL SETTER</strong>: the setter parameters (spindle zero, feeds, travel, retract) and <strong>SET TOOL TOUCH OFF POS</strong>. See chapter 6.</li>
+<li><strong>Left column:</strong> work-offset selection, <strong>PROBE POSITION ONLY</strong>, the probing parameters and <strong>PROBE RESULTS</strong>.</li>
+<li><strong>Pages across the top:</strong> OUTSIDE CORNERS, INSIDE CORNERS, BOSS AND POCKET, RIDGE AND VALLEY, EDGE ANGLE, ROTARY AXIS, CALIBRATE, PROBE HELP.</li>
 </ul>
+<p>See chapters 5 and 6.</p>
 <h3>CONVERSATIONAL</h3>
-<p>Generates simple programs without CAM: FACING, HOLE OPS (with XY COORD, PATTERN and THREAD MILL), PERIMETER, POCKETS and MISC. See chapter 9.</p>
-<h3>SETTINGS and STATUS</h3>
-<p>SETTINGS holds startup options (which tab opens first), programmable-coolant constants, the spindle-rpm display source and the angular jog link. STATUS shows machine status messages and the error history: look here when something "did nothing".</p><nav class="pager"><span><a href="01-concepts.html">← 1. The two ideas everything rests on</a></span><span><a href="03-first-job.html">3. Your first job, start to finish →</a></span></nav></main></body></html>
+<p><img alt="CONVERSATIONAL tab, FACING" src="images/conversational-facing.jpg" /></p>
+<p>Generates simple programs from a form. The vertical sub-tabs on the left are FACING, HOLE OPS, PERIMETER, POCKETS and MISC. See chapter 9.</p>
+<h3>SETTINGS</h3>
+<p><img alt="SETTINGS tab" src="images/settings-tab.jpg" /></p>
+<p>Startup tab, programmable coolant constants, the spindle-rpm display source (calculated or encoder), and the angular-jog link.</p>
+<h3>STATUS</h3>
+<p><img alt="STATUS tab" src="images/status-tab.jpg" /></p>
+<p><strong>ALL NOTIFICATIONS</strong>: every error and message with its time, with filters for INFO / WARN / ERROR / DEBUG. <strong>Look here first when something "did nothing".</strong> On the reference machine it showed the "Requested tool 18 not found" error with its exact time, which led to the cause.</p>
+<h3>USER MAIN</h3>
+<p>An empty tab for your own panels (<code>user_tabs/</code> in the config).</p><nav class="pager"><span><a href="01-concepts.html">← 1. The two ideas everything rests on</a></span><span><a href="03-first-job.html">3. Your first job, start to finish →</a></span></nav></main></body></html>

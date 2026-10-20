@@ -6,6 +6,7 @@
 <p>A tool setter is a switch at a fixed spot on the table. Lowering a cutter onto it tells LinuxCNC exactly how far that cutter's tip sits below the spindle reference, which is its tool length. With one, tool changes stop being a source of depth errors.</p>
 <p><img alt="How the tool setter measures tool length" src="diagrams/tool-setter.svg" /></p>
 <h2>One-time setup (PROBING → TOOL SETTER)</h2>
+<p><img alt="TOOL SETTER sub-tab: SPINDLE ZERO 49.1901, touch-off position X 350 Y 515" src="images/tool-setter-tab.jpg" /></p>
 <h3>1. Wire it to the probe input</h3>
 <p>LinuxCNC has one probe input (<code>motion.probe-input</code>). If you have a 3D probe, a touch plate and a setter, OR them together in HAL so any of them triggers probing. On the reference machine the setter is normally-closed, so its input is inverted (<code>input-06-not</code>) before the OR. See <code>config/6040_7i96s/hallib/6040_7i96s.hal</code>.</p>
 <h3>2. Set the touch-off position (G30)</h3>

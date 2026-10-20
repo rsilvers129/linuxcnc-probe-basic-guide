@@ -19,6 +19,8 @@ A normally-open (NO) probe reads "not triggered" when it is unplugged or its cab
 
 ### Calibration (CALIBRATE page)
 
+![CALIBRATE page: calibration offset 0.047144 from a 24.995 mm ring gauge](images/probing-calibrate.jpg)
+
 The ball triggers a little before its surface actually touches. That's the "pretravel", and it makes the ball's effective diameter slightly smaller than the real one. Calibration measures this once:
 
 1. Clamp a ring gauge (or any precisely known bore) to the table.
@@ -72,7 +74,7 @@ Each routine page shows pictures of where to start and which way the probe will 
 
 ### OUTSIDE CORNERS
 
-<!-- shot: outside-corners -->
+![OUTSIDE CORNERS page](images/probing-outside-corners.jpg)
 
 A 3×3 grid of buttons:
 
@@ -82,13 +84,13 @@ A 3×3 grid of buttons:
 
 ### INSIDE CORNERS
 
-<!-- shot: inside-corners -->
+![INSIDE CORNERS page](images/probing-inside-corners.jpg)
 
 The same idea inside a pocket or against a fixture's inside corner, plus single-direction X+/X−/Y+/Y− touches and a Z touch. Start inside, below the top edge, within MAX X/Y DISTANCE of the walls.
 
 ### BOSS AND POCKET
 
-<!-- shot: boss-pocket -->
+![BOSS AND POCKET page, with the X 200 / Y 69 hints from the plywood test](images/probing-boss-pocket.jpg)
 
 Six buttons in two rows:
 
@@ -104,13 +106,13 @@ RECT BOSS is the everyday "center of the stock" routine. See the diagram in chap
 
 ### RIDGE AND VALLEY
 
-<!-- shot: ridge-valley -->
+
 
 Finds the center of a rib (ridge) or a slot (valley), in X or in Y, with its own X/Y hints. Use it for the center of a T-slot, a keyway or a narrow bar.
 
 ### EDGE ANGLE
 
-<!-- shot: edge-angle -->
+![EDGE ANGLE page with SET ROTATION WCO and EDGE WIDTH](images/probing-edge-angle.jpg)
 
 Touches one edge at two points, EDGE WIDTH apart, and reports the angle (EDGE ∠) and the offset between the touches (EDGE Δ). Use it to check that a vise or part is square to the axes. **SET ROTATION WCO** stores the angle as the work offset's rotation (the R column on the OFFSETS tab), so programs run rotated to match a part that is clamped crooked.
 
@@ -121,6 +123,8 @@ Touches one edge at two points, EDGE WIDTH apart, and reports the angle (EDGE �
 Probing routines for a 4th axis: centering on a cylinder in the rotary chuck.
 
 ### PROBE HELP
+
+![PROBE HELP page](images/probing-help.jpg)
 
 Pages of built-in diagrams for every routine (PREV PAGE / NEXT PAGE). Worth reading once.
 

@@ -1,6 +1,6 @@
 # 9. Conversational programming
 
-<!-- shot: conversational-tab -->
+![CONVERSATIONAL > HOLE OPS > XY COORD](images/conversational-hole-ops.jpg)
 
 The CONVERSATIONAL tab writes simple G-code from a form, with no CAM needed. Its pages:
 
@@ -8,7 +8,7 @@ The CONVERSATIONAL tab writes simple G-code from a form, with no CAM needed. Its
 |---|---|
 | **FACING** | A zig-zag facing program over a rectangle. Good for surfacing a wasteboard or squaring stock. |
 | **HOLE OPS** | Drilling, peck drilling, tapping and boring cycles, at positions from **XY COORD** (a list of points) or **PATTERN** (bolt circles and grids). **THREAD MILL** generates helical thread milling. |
-| **PERIMETER** | A profile around a rectangle or circle. |
+| **PERIMETER** | Profile operations. On the reference machine (Probe Basic 1.0.3) this page was still empty. |
 | **POCKETS** | Rectangular and circular pockets. |
 | **MISC** | Smaller utilities. |
 

@@ -1,6 +1,6 @@
 # 7. The tool table
 
-<!-- shot: tool-tab -->
+![TOOL tab with the database tool table](images/tool-tab.jpg)
 
 ## Where it lives
 
