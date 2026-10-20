@@ -1,0 +1,1264 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Probe Basic, Explained</title>
+<meta name="author" content="rsilvers129, written with Claude"><style>
+:root { --bg:#fbfbf8; --fg:#1d1d1f; --muted:#5f6368; --line:#d9d9d4; --accent:#1f6fd1; --box:#eef4fd; --code:#f1f1ec; }
+body{background:#fff;color:#111} h1{page-break-before:always} h1.booktitle{page-break-before:avoid;font-size:2.6rem;margin-top:30%}</style></head><body><main><h1 class="booktitle">Probe Basic, Explained</h1><p>An illustrated guide to LinuxCNC&#x27;s Probe Basic screen, and a complete Mesa 7I96S router build</p><p>rsilvers129, written with Claude</p><p>https://github.com/rsilvers129/linuxcnc-probe-basic-guide</p>
+<div style="page-break-before: always"></div><h1>Probe Basic, Explained</h1>
+<p><em>An illustrated guide to running a CNC router or mill with LinuxCNC and the Probe Basic screen, from homing to the last tool change.</em></p>
+<h2>Why this guide exists</h2>
+<p>Probe Basic is one of the best-looking and most capable screens for LinuxCNC. It has a full probing suite, a tool-setter routine, conversational programming and a database tool table. Its official documentation covers installation and configuration well, but the parts a new operator needs most are thin. The interface pages are mostly screenshots with headings, and nothing walks you through a real job from start to finish.</p>
+<p>This guide fills that gap. It was written while setting up and running a real machine: a Chinese 6040 router converted from Mach3 to LinuxCNC with a Mesa 7I96S card. Every procedure here was done on that machine, and every mistake in the troubleshooting chapter actually happened.</p>
+<h2>Who it is for</h2>
+<ul>
+<li><strong>New Probe Basic users</strong> who can start LinuxCNC but are not sure what half the buttons do.</li>
+<li><strong>People coming from Mach3, UCCNC or GRBL senders</strong>, where work offsets and tool lengths work a little differently.</li>
+<li><strong>Anyone (or any AI assistant) who wants to reproduce this exact machine.</strong> The repository holds the complete, working configuration: Mesa firmware, HAL, INI, Modbus spindle control, wiring tables and calibration values. See <em>AGENTS.md</em> in the repository root.</li>
+</ul>
+<h2>Versions</h2>
+<p>Written against:</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Probe Basic</td>
+<td>1.0.3</td>
+</tr>
+<tr>
+<td>QtPyVCP</td>
+<td>6.0.7</td>
+</tr>
+<tr>
+<td>LinuxCNC</td>
+<td>2.9.10 (uspace, PREEMPT_RT)</td>
+</tr>
+<tr>
+<td>OS</td>
+<td>Debian 13 "Trixie"</td>
+</tr>
+</tbody>
+</table>
+<p>Probe Basic changes between versions, so if a button described here is missing on your screen, check the version first.</p>
+<h2>How to read it</h2>
+<p>Chapters 1 to 3 are the core: the two ideas everything rests on (work offsets and tool lengths), a tour of the screen, and a complete first job. After that, use the chapters as a reference.</p>
+<p>Boxes marked <strong>On the 6040</strong> show how the reference machine is set up. Skip them if your machine is different.</p>
+<blockquote>
+<p><strong>Safety.</strong> A CNC machine will do exactly what it is told, including driving a cutter into a vise. Keep a hand near FEED HOLD or the E-stop the first time you run anything, and run new programs slowly, or in the air, first.</p>
+</blockquote>
+<h2>Licence</h2>
+<p>Text and diagrams: Creative Commons Attribution-ShareAlike 4.0. Configuration files: GPL-2.0-or-later, the same as LinuxCNC and Probe Basic, which several of them come from. Probe Basic is by the kcjengr team, and this guide is not affiliated with them.</p>
+<div style="page-break-before: always"></div><h1>1. The two ideas everything rests on</h1>
+<p>Almost every confusing moment in Probe Basic comes back to two questions:</p>
+<ol>
+<li><strong>Where is the part?</strong> That is answered by the <em>work offset</em>.</li>
+<li><strong>Where is the tip of the cutter?</strong> That is answered by the <em>tool length offset</em>.</li>
+</ol>
+<p>Once both are right, a program that says "go to X0 Y0 Z−0.3" puts the tip of whatever cutter is loaded exactly 0.3 mm below the top of your part, at the point the program calls zero.</p>
+<h2>Machine coordinates</h2>
+<p>When you press <strong>REF ALL</strong> (home), each axis drives to its switch and LinuxCNC sets <strong>machine coordinates</strong>. They are fixed to the frame of the machine and never change until the next homing. On most routers machine Z0 is the <em>top</em> of Z travel, so every Z position below it is negative.</p>
+<p>Machine coordinates are what the soft limits use. They are also what tool-change positions, the tool setter position and other "fixed places on the table" are stored in.</p>
+<h2>Work coordinates and the work offset (G54)</h2>
+<p>Your CAM program is not written in machine coordinates. It is written relative to the part: typically X0 Y0 at a corner or the center, and Z0 on the top surface. The <strong>work offset</strong> connects the two. It is simply the position of the part's zero point, expressed in machine coordinates.</p>
+<p><img alt="Machine coordinates and the G54 work offset" src="diagrams/coordinates.svg" /></p>
+<p>LinuxCNC has nine work offsets: <strong>G54, G55, G56, G57, G58, G59, G59.1, G59.2 and G59.3</strong>. Each is a separate stored zero, so you can keep several fixtures or vises set up at once and pick one per job. Most people only ever use G54, which is also the default selected at startup.</p>
+<p>You can set a work offset three ways:</p>
+<ul>
+<li><strong>With the probe</strong> (the best way). A probing routine finds the part's edges or center and writes the result into the active offset. See chapter 5.</li>
+<li><strong>By touching off</strong>: jog to a known point and press <strong>ZERO X / ZERO Y / ZERO Z</strong> (or use the touch plate for Z).</li>
+<li><strong>By typing</strong>: <code>G10 L2 P1 X… Y… Z…</code> writes G54 directly in machine coordinates. <code>G10 L20 P1 X0</code> means "make <em>where I am now</em> X0 in G54".</li>
+</ul>
+<p>Work offsets are saved in the parameter file (the <code>.var</code> file), so they survive a restart. After a restart you only need to home again.</p>
+<blockquote>
+<p><strong>On the 6040.</strong> The isogrid test job used G54 = X 191.174, Y 271.276, Z −102.427. That is the center and top of a piece of plywood, found with the 3D probe's RECT BOSS routine.</p>
+</blockquote>
+<h2>Tool length offsets (G43)</h2>
+<p>LinuxCNC needs to know how far each cutter's tip sits below a fixed reference point on the spindle. On most hobby machines that reference is the <strong>face of the collet nut</strong> (sometimes called the spindle nose). The distance from that face down to the tip is the tool's <strong>length</strong>, stored in the <strong>tool table</strong>.</p>
+<p><img alt="Tool length offset" src="diagrams/tool-length.svg" /></p>
+<p><strong>G43 Hn</strong> tells LinuxCNC "the tool in the spindle is tool <em>n</em>; apply its length". From then on, Z positions and the Z readout refer to the tip of that tool. <strong>G49</strong> cancels it, and Z refers to the nut face again.</p>
+<p>This is why a program can change from a 6 mm end mill to a 1/8" end mill and keep cutting at the right depth. Each tool's length is different, but G43 corrects for it.</p>
+<p>Tool lengths are measured with a <strong>tool setter</strong>, a switch fixed to the table that the cutter is lowered onto. See chapter 6.</p>
+<h2>Why both matter: the shared reference</h2>
+<p>The tool setter, the touch plate and the 3D probe all agree because they all use the same reference: the nut face.</p>
+<ul>
+<li>The setter measures each tool's length from the nut face.</li>
+<li>The probe is just another "tool" in the table (often T99), with its own measured length.</li>
+<li>When the probe touches the top of the part, LinuxCNC knows where the <em>ball tip</em> is (because G43 is active for T99). It stores the part's top as G54 Z0.</li>
+<li>When the program later loads T1 and applies G43 H1, "Z0" puts T1's tip on that same surface.</li>
+</ul>
+<blockquote>
+<p><strong>The most common mistake.</strong> Probing with the probe in the spindle but <strong>without G43 active</strong> for it. LinuxCNC then thinks the nut face touched the part, and Z0 ends up one probe-length too high. On the 6040 that was 46.87 mm, so the program cut air. The fix is to always load the probe with <strong>M6 G43</strong> (chapter 5).</p>
+</blockquote>
+<h2>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Answer</th>
+<th>Set by</th>
+<th>Stored in</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Where is the machine?</td>
+<td>Machine coordinates</td>
+<td>REF ALL (homing)</td>
+<td>Re-found at every homing</td>
+</tr>
+<tr>
+<td>Where is the part?</td>
+<td>Work offset (G54…)</td>
+<td>Probing, ZERO buttons, G10 L2/L20</td>
+<td>Parameter file (<code>.var</code>)</td>
+</tr>
+<tr>
+<td>Where is the cutter tip?</td>
+<td>Tool length (G43 Hn)</td>
+<td>Tool setter, TOUCH OFF</td>
+<td>Tool table</td>
+</tr>
+</tbody>
+</table>
+<div style="page-break-before: always"></div><h1>2. A tour of the screen</h1>
+<p>Probe Basic's window has two parts:</p>
+<ul>
+<li><strong>The top area</strong> changes with the tab you pick: MAIN, FILE, TOOL, OFFSETS, PROBING, CONVERSATIONAL, SETTINGS and STATUS. ATC and USER tabs appear when they are enabled.</li>
+<li><strong>The control strip along the bottom</strong> never changes. It holds everything you need while a program runs.</li>
+</ul>
+<h2>The bottom control strip</h2>
+<p>Learn this strip first; it is where you spend most of your time.</p>
+<h3>Program control (left)</h3>
+<table>
+<thead>
+<tr>
+<th>Button</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CYCLE START</strong></td>
+<td>Runs the loaded program, or resumes after FEED HOLD. It is greyed out until the machine is on, homed, idle and has a program loaded.</td>
+</tr>
+<tr>
+<td><strong>STOP</strong></td>
+<td>Aborts the program. You lose your place; restarting mid-program needs RUN FROM LINE.</td>
+</tr>
+<tr>
+<td><strong>FEED HOLD</strong></td>
+<td>Freezes motion immediately and keeps your place. The <strong>spindle keeps running.</strong> Press CYCLE START to continue.</td>
+</tr>
+<tr>
+<td><strong>SINGLE BLOCK</strong></td>
+<td>When lit, each CYCLE START runs one line. Good for stepping through the start of a new program.</td>
+</tr>
+<tr>
+<td><strong>BLOCK DELETE</strong></td>
+<td>When lit, lines that start with <code>/</code> are skipped.</td>
+</tr>
+<tr>
+<td><strong>M01 BREAK</strong></td>
+<td>When lit, the program stops at every <code>M1</code> (optional stop). Fusion 360 often puts an <code>M1</code> before tool changes.</td>
+</tr>
+<tr>
+<td><strong>POWER</strong></td>
+<td>Machine on/off (after the E-stop is released).</td>
+</tr>
+<tr>
+<td><strong>E-STOP</strong></td>
+<td>Software E-stop toggle. Your physical E-stop button is separate and always wins.</td>
+</tr>
+<tr>
+<td>Timer</td>
+<td>Running time of the current program.</td>
+</tr>
+</tbody>
+</table>
+<h3>Tool panel</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>T</strong> box + <strong>M6 G43</strong></td>
+<td>Type a tool number and press it: tool change to that tool, then apply its length. Use it for the probe (T99) and for manual tool loads.</td>
+</tr>
+<tr>
+<td><strong>G43 / G49</strong></td>
+<td>Turn the tool length offset on or off. The lit one is active.</td>
+</tr>
+<tr>
+<td><strong>LENGTH / DIAM</strong></td>
+<td>Length and diameter of the tool in the spindle, from the tool table.</td>
+</tr>
+<tr>
+<td><strong>GO TO ZERO</strong></td>
+<td>Moves to the work zero: Z up first, then X0 Y0.</td>
+</tr>
+<tr>
+<td><strong>GO TO G30</strong></td>
+<td>Moves to the stored G30 position. Probe Basic uses it as the tool-setter position.</td>
+</tr>
+<tr>
+<td><strong>GO TO HOME</strong></td>
+<td>Moves to machine home.</td>
+</tr>
+</tbody>
+</table>
+<h3>Position readout (DRO)</h3>
+<p>One row per axis:</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ZERO X / Y / Z / A</strong></td>
+<td>Makes the current position zero in the active work offset. It <strong>moves your work zero</strong>, so don't press it by accident.</td>
+</tr>
+<tr>
+<td><strong>G54 WORK</strong></td>
+<td>Position relative to the part. That is the tool tip, if G43 is on.</td>
+</tr>
+<tr>
+<td><strong>MACHINE</strong></td>
+<td>Absolute machine position.</td>
+</tr>
+<tr>
+<td><strong>DTG</strong></td>
+<td>Distance to go in the current move.</td>
+</tr>
+<tr>
+<td><strong>REF X / Y / Z / A</strong></td>
+<td>Homes that axis. <strong>REF ALL</strong> homes everything; when done, the button reads <strong>HOMED</strong>.</td>
+</tr>
+<tr>
+<td><strong>ZERO ALL</strong></td>
+<td>Zeroes all axes at the current spot.</td>
+</tr>
+</tbody>
+</table>
+<h3>Overrides</h3>
+<p>Four sliders, each with a button that snaps back to 100 %:</p>
+<table>
+<thead>
+<tr>
+<th>Slider</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>F</strong></td>
+<td>Feed override: scales every cutting feed. Turn it down for the first plunge of a new program, up once you trust it.</td>
+</tr>
+<tr>
+<td><strong>R</strong></td>
+<td>Rapid override.</td>
+</tr>
+<tr>
+<td><strong>S</strong></td>
+<td>Spindle speed override.</td>
+</tr>
+<tr>
+<td><strong>V</strong></td>
+<td>Maximum velocity for all moves.</td>
+</tr>
+</tbody>
+</table>
+<p>The <strong>spindle load</strong> bar shows spindle load when the machine reports it.</p>
+<h3>Spindle and jog</h3>
+<ul>
+<li><strong>FWD / STOP / REV</strong> run the spindle manually at the default speed.</li>
+<li>The <strong>JOG</strong> panel has continuous and step jogging (1, 0.1, 0.01 mm on the reference machine).</li>
+<li>The <strong>JOG / WCS / PLOT / USER</strong> sub-tabs switch the small panel between jog buttons, work-offset buttons, preview options and user buttons.</li>
+<li><strong>MAN / AUTO / MDI</strong> select the machine mode. Probe Basic usually switches for you.</li>
+</ul>
+<h2>The tabs</h2>
+<h3>MAIN</h3>
+<p>The 3D toolpath preview (backplot) and the G-code listing. Preview buttons: ISO / X / Y / Z views, PAN, ZOOM ±, PGM EXT (fit the program), MCH EXT (fit the machine), PATH and CLEAR (the live tool trail), ORTHO/PSPECT.</p>
+<p>The <strong>MDI</strong> sub-page has a keypad, MDI history and RUN FROM LINE controls. <strong>RUN FROM LINE does not restore the state before that line</strong>: position, feeds, work offset, tool, tool length, spindle. Only use it at the start of an operation, where the program sets all of those itself.</p>
+<h3>FILE</h3>
+<p>The file browser for your <code>nc_files</code> folder and USB sticks. <strong>LOAD G-CODE</strong> opens a program. <strong>TO PC / TO USB</strong> copy files. There is also a built-in G-code editor (EDIT G-CODE, FIND/REPLACE, SAVE AS).</p>
+<h3>TOOL</h3>
+<p>The tool table, plus two panels:</p>
+<ul>
+<li><strong>Tool change panel</strong>: <strong>M6 G43</strong> for a tool number. <strong>LOAD SPINDLE / UNLOAD SPINDLE</strong> are for ATC machines.</li>
+<li><strong>Electronic tool setter</strong>: <strong>TOUCH OFF CURRENT TOOL</strong> measures the loaded tool on the setter. See chapter 6.</li>
+</ul>
+<p>Table columns: tool number, pocket, Z (length), diameter, remark, and an <strong>ATC</strong> checkbox. ATC only matters with an automatic tool changer: it marks tools that fit in the carousel, and does nothing on a manual-change machine. <strong>SAVE TABLE</strong> commits your edits.</p>
+<h3>OFFSETS</h3>
+<p>All nine work offsets as a table, plus the current one broken down. See chapter 4.</p>
+<h3>PROBING</h3>
+<p>Two sub-tabs:</p>
+<ul>
+<li><strong>TOUCH PROBE</strong>: the probing parameters, the PROBE RESULTS panel, and the routine pages: OUTSIDE CORNERS, INSIDE CORNERS, BOSS AND POCKET, RIDGE AND VALLEY, EDGE ANGLE, ROTARY AXIS, CALIBRATE and PROBE HELP. See chapter 5.</li>
+<li><strong>TOOL SETTER</strong>: the setter parameters (spindle zero, feeds, travel, retract) and <strong>SET TOOL TOUCH OFF POS</strong>. See chapter 6.</li>
+</ul>
+<h3>CONVERSATIONAL</h3>
+<p>Generates simple programs without CAM: FACING, HOLE OPS (with XY COORD, PATTERN and THREAD MILL), PERIMETER, POCKETS and MISC. See chapter 9.</p>
+<h3>SETTINGS and STATUS</h3>
+<p>SETTINGS holds startup options (which tab opens first), programmable-coolant constants, the spindle-rpm display source and the angular jog link. STATUS shows machine status messages and the error history: look here when something "did nothing".</p>
+<div style="page-break-before: always"></div><h1>3. Your first job, start to finish</h1>
+<p>This is the complete sequence for a CAM program with several tools, a part held on the table, a 3D probe and a tool setter. It is the routine used for every job on the reference machine.</p>
+<h2>1. Power up and home</h2>
+<ol>
+<li>Switch on the control box (stepper drivers, VFD, Mesa card), then start LinuxCNC.</li>
+<li>Release the E-stop and press <strong>POWER</strong>.</li>
+<li>Press <strong>REF ALL</strong>. Each axis homes in turn; Z goes first on most routers so the spindle lifts clear. The button then reads <strong>HOMED</strong>.</li>
+</ol>
+<p>You must home after every LinuxCNC start. Work offsets and tool lengths are kept, but LinuxCNC can't know where the axes are until they find their switches.</p>
+<h2>2. Load the program</h2>
+<p><strong>FILE</strong> tab → select the file → <strong>LOAD G-CODE</strong>. Then check the preview on the MAIN tab:</p>
+<ul>
+<li>The whole toolpath should draw. If you only see a few lines, the preview stopped at an error; check STATUS. (A subroutine that probes during the program can cause this. See chapter 11.)</li>
+<li><strong>PGM EXT</strong> zooms to the program. Check it is roughly where you expect relative to the part.</li>
+</ul>
+<h2>3. Load the probe</h2>
+<p>Put the 3D probe in the spindle. In the <strong>T</strong> box at the bottom type the probe's tool number (often <strong>99</strong>), then press <strong>M6 G43</strong>.</p>
+<ul>
+<li><strong>M6</strong> tells LinuxCNC that tool is now in the spindle. On a manual-change machine it lifts Z and asks you to insert it; just confirm.</li>
+<li><strong>G43</strong> applies the probe's measured length, so Z now refers to the ball tip.</li>
+</ul>
+<p>Check: the T box shows 99, the <strong>G43</strong> button is lit, and <strong>LENGTH</strong> shows the probe's length. Tap the stylus; the probe LED on screen should light. A normally-open probe that is unplugged never triggers, so always test it.</p>
+<h2>4. Find the part with the probe</h2>
+<p>Go to <strong>PROBING → TOUCH PROBE</strong>.</p>
+<ol>
+<li>Turn <strong>PROBE POSITION ONLY</strong> <strong>off</strong>. While it is on, routines only measure and report. While it is off, they write the result into the active work offset, which is what you want now.</li>
+<li>Pick the routine that matches the part. For a rectangular block or board whose center is your zero: <strong>BOSS AND POCKET → RECT BOSS</strong> (bottom row, middle).</li>
+<li>Enter the part's approximate size in <strong>X HINT</strong> and <strong>Y HINT</strong>. The routine steps out by half the hint plus the step-off width before it drops down beside the part.</li>
+<li>Jog the probe over the middle of the part, within a few millimetres of center, with the ball 3–8 mm above the top. That must be within MAX Z DISTANCE.</li>
+<li>Press the routine button. The probe touches the top (Z0), then both X sides and both Y sides, and returns over the center.</li>
+<li>Read <strong>PROBE RESULTS</strong>: X WIDTH and Y WIDTH should match the part. The DRO should now read about X0 Y0, and Z = the Z CLEARANCE.</li>
+<li>Turn <strong>PROBE POSITION ONLY</strong> back <strong>on</strong>, so a later measurement can't move your zero by accident.</li>
+</ol>
+<p><img alt="RECT BOSS probing sequence" src="diagrams/rect-boss.svg" /></p>
+<p>For a corner zero instead, use <strong>OUTSIDE CORNERS</strong> and pick the corner. Chapter 5 covers every routine.</p>
+<h2>5. Check Z before cutting (30 seconds, worth it)</h2>
+<p>With the probe still loaded and G43 on, the DRO Z shows the ball's height above the part. Hold a ruler to the gap. If the DRO says 55 and the gap is 55 mm, the zero is right. If the gap is about one probe-length different, G43 wasn't active during probing: redo step 3, then step 4.</p>
+<h2>6. Run</h2>
+<ol>
+<li>Take the probe out.</li>
+<li>Turn the <strong>F</strong> (feed override) slider down to 25–50 % for the start.</li>
+<li>Press <strong>CYCLE START</strong>.</li>
+<li>At the first <code>T1 M6</code> the machine lifts Z and asks for tool 1. Insert it and confirm.
+   - <strong>With the M6 remap</strong> (chapter 6): it drives to the tool setter, measures the tool and continues. Nothing else to do.
+   - <strong>Without the remap</strong>: the program uses whatever length is in the tool table, so you must have measured the tool beforehand with TOUCH OFF CURRENT TOOL.</li>
+<li>Watch the first plunge. The tip should land where the program says, for example just below the top surface for a facing pass. If anything looks wrong, press <strong>FEED HOLD</strong>.</li>
+<li>Once it looks right, bring the feed override back to 100 %.</li>
+</ol>
+<h2>7. Tool changes and pauses</h2>
+<ul>
+<li><strong>Every <code>M6</code></strong>: lift, prompt, insert, confirm, measure (with the remap), continue.</li>
+<li><strong><code>M1</code></strong> (optional stop): the program pauses only if <strong>M01 BREAK</strong> is lit. Press CYCLE START to continue.</li>
+<li><strong>Pausing</strong>: <strong>FEED HOLD</strong>, then <strong>CYCLE START</strong> to resume. The spindle keeps turning during a hold, so keep hands and the vacuum nozzle away from the cutter. In metal, keep holds short: a spinning tool that is not moving rubs and heats up.</li>
+</ul>
+<h2>8. When it finishes</h2>
+<p>The program ends with <code>M30</code>: spindle off, offsets kept. The work offset stays valid as long as the part doesn't move, so you can re-run, or run a second program on the same part, without probing again.</p>
+<blockquote>
+<p><strong>On the 6040.</strong> The first job on this machine was an aluminum isogrid plate, test-cut first in plywood. It used three tools: a 6 mm single-flute for facing and roughing, a 1/8" single-flute O-flute for corners, walls, holes and the profile, and a 90° chamfer mill. G54 came from RECT BOSS on the stock, and every tool was measured on the setter at its M6.</p>
+</blockquote>
+<div style="page-break-before: always"></div><h1>4. The OFFSETS tab</h1>
+<p>Chapter 1 explains what a work offset is. This chapter is the screen.</p>
+<h2>The table (left)</h2>
+<p>One row per work coordinate system, in order: <strong>G54, G55, G56, G57, G58, G59, G59.1, G59.2, G59.3</strong>. Columns: <strong>X, Y, Z, A</strong> (the zero point, in machine coordinates) and <strong>R</strong> (rotation in degrees, set by EDGE ANGLE → SET ROTATION WCO).</p>
+<ul>
+<li><strong>SAVE TABLE / RELOAD TABLE</strong> write or re-read the parameter file. Values set by probing or ZERO buttons are already saved; use these after editing cells by hand.</li>
+<li><strong>CLEAR SELECTED / CLEAR ALL</strong> zero offsets. CLEAR ALL wipes every fixture you have set up.</li>
+</ul>
+<h2>Selecting the active offset (right, top)</h2>
+<p>The buttons <strong>G54 … G59.3</strong> select which one is active. The lit one is what programs, probing and the ZERO buttons use. A program can also select one itself with a line like <code>G55</code>, and most CAM posts write <code>G54</code> at the start.</p>
+<h2>The breakdown table (right, bottom)</h2>
+<p>For each axis:</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>SET TO ZERO</strong></td>
+<td>The ZERO button: makes the current position zero in the active offset.</td>
+</tr>
+<tr>
+<td><strong>WC CURRENT POSITION</strong></td>
+<td>Where the tool tip is relative to the part.</td>
+</tr>
+<tr>
+<td><strong>MACHINE COORDS</strong></td>
+<td>Absolute position.</td>
+</tr>
+<tr>
+<td><strong>WC OFFSET</strong></td>
+<td>The active offset's value, the same as the table row.</td>
+</tr>
+<tr>
+<td><strong>G52/G92 OFFSET</strong></td>
+<td>A temporary extra shift. Keep it 0 unless you use G52/G92 on purpose.</td>
+</tr>
+<tr>
+<td><strong>TOOL OFFSET</strong></td>
+<td>The active tool length (Z) from G43.</td>
+</tr>
+</tbody>
+</table>
+<p>They always add up: <strong>WC current = machine − WC offset − G52/G92 − tool offset</strong>.</p>
+<p>Worked example from the reference machine, with the probe (length 46.8736) loaded and G43 on, and Z all the way up:</p>
+<pre><code>Z:  0.000 − (−102.4266) − 0 − 46.8736 = 55.553
+</code></pre>
+<p>So the probe's ball was 55.55 mm above the part's top surface. A ruler confirmed it.</p>
+<h2>Good practice</h2>
+<ul>
+<li><strong>Don't press ZERO buttons you don't mean to.</strong> Each one silently moves your part's zero.</li>
+<li><strong>Use one offset per fixture.</strong> G54 for the vise, G55 for a second vise, G56 for a jig. Then a program for a different fixture just selects its offset, and nothing needs re-probing.</li>
+<li><strong>Write offsets down for repeat fixtures.</strong> If a fixture is pinned to the table, its offset is valid every time you mount it.</li>
+</ul>
+<div style="page-break-before: always"></div><h1>5. Probing</h1>
+<p>A 3D touch probe turns "find the edge of the part" into a button press, and is far more accurate than an edge finder or eyeballing. Probe Basic's probing suite is its biggest strength.</p>
+<h2>Setting up the probe</h2>
+<h3>The probe is a tool</h3>
+<p>The probe gets a tool number, set as <strong>Probe Tool #</strong> on the TOUCH PROBE page (parameter #3014; 99 is common). Its tool-table entry needs:</p>
+<ul>
+<li><strong>Diameter</strong>: the ball diameter, measured with a micrometer. The reference machine's "2 mm" ball measured 1.998 mm.</li>
+<li><strong>Length</strong>: measured like any tool, but gently. Either use TOUCH OFF CURRENT TOOL on the tool setter at a slow feed, or touch the probe and a cutter on the same flat surface and compare.</li>
+</ul>
+<p>Every probing routine first checks that the probe tool is the one in the spindle, and aborts with <em>"Specified probe tool … not in spindle"</em> if not. <strong>Always load it with M6 G43</strong> so its length is applied (chapter 1 explains why).</p>
+<h3>Wiring note: normally open vs normally closed</h3>
+<p>A normally-open (NO) probe reads "not triggered" when it is unplugged or its cable is broken. Probe Basic will then drive it into the part until the stylus overtravel limit or a crash. Tap-test the probe before every probing session. A normally-closed (NC) probe fails safe, which is why industrial probes use NC.</p>
+<h3>Calibration (CALIBRATE page)</h3>
+<p>The ball triggers a little before its surface actually touches. That's the "pretravel", and it makes the ball's effective diameter slightly smaller than the real one. Calibration measures this once:</p>
+<ol>
+<li>Clamp a ring gauge (or any precisely known bore) to the table.</li>
+<li>Enter its diameter in <strong>CALIBRATION DIAMETER</strong>.</li>
+<li>Put the probe roughly in its center, below the top edge.</li>
+<li>Run the round-pocket calibration.</li>
+<li>Choose which error to store: <strong>CAL ON AVG XY ERROR</strong>, <strong>CAL ON X ERROR</strong> or <strong>CAL ON Y ERROR</strong>.</li>
+</ol>
+<p>The result is the <strong>PROBE CALIBRATION OFFSET</strong> (#3032). It is subtracted from the ball radius in every edge calculation. <strong>PROBE CAL RESET</strong> clears it. There are also boss and square calibrations for when you have a gauge pin or a gauge block instead of a ring.</p>
+<blockquote>
+<p><strong>On the 6040.</strong> A 24.995 mm ring gauge gave different results in X and Y: the X width read 0.040 mm smaller than Y. That isn't the probe; it's axis backlash. The two axes have different amounts of lost motion, and a single calibration offset can only correct one of them. Measuring backlash with a dial indicator and entering BACKLASH in the INI fixes the root cause. Until then, calibrate on the axis you care about most.</p>
+</blockquote>
+<h2>The parameters</h2>
+<p>On the TOUCH PROBE page:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>#</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Probe Tool #</td>
+<td>3014</td>
+<td>Tool number of the probe.</td>
+</tr>
+<tr>
+<td>Probe fast feedrate</td>
+<td>3016</td>
+<td>Speed of the first, searching touch.</td>
+</tr>
+<tr>
+<td>Probe slow feedrate</td>
+<td>3015</td>
+<td>Speed of the second, measuring touch. 0 skips the second touch.</td>
+</tr>
+<tr>
+<td>Probe traverse FR</td>
+<td>3017</td>
+<td>Speed of non-probing moves between touches. These moves are themselves "guarded" (G38.3), so a collision stops the probe instead of breaking it.</td>
+</tr>
+<tr>
+<td>Max X/Y distance</td>
+<td>3018</td>
+<td>How far a sideways search goes before giving up.</td>
+</tr>
+<tr>
+<td>X/Y clearance</td>
+<td>3019</td>
+<td>Back-off before the slow touch.</td>
+</tr>
+<tr>
+<td>Max Z distance</td>
+<td>3020</td>
+<td>How far the downward search goes. Start within this distance above the surface.</td>
+</tr>
+<tr>
+<td>Z clearance</td>
+<td>3021</td>
+<td>Height above the surface for moves between touches.</td>
+</tr>
+<tr>
+<td>Extra probe depth</td>
+<td>3022</td>
+<td>How far below the top edge the ball goes for side touches. It goes down by Z clearance + ball diameter + this.</td>
+</tr>
+<tr>
+<td>Step off width</td>
+<td>3023</td>
+<td>How far past an edge the probe steps before dropping down beside it.</td>
+</tr>
+<tr>
+<td>Edge width</td>
+<td>3024</td>
+<td>Spacing between the two touches of an EDGE ANGLE measurement.</td>
+</tr>
+<tr>
+<td>Hints</td>
+<td>3025–3029</td>
+<td>Approximate part sizes for the boss, pocket, ridge and valley routines.</td>
+</tr>
+<tr>
+<td>Probe position only</td>
+<td>3030</td>
+<td>1 = measure only; 0 = write results into the active work offset.</td>
+</tr>
+</tbody>
+</table>
+<h2>PROBE POSITION ONLY and PROBE RESULTS</h2>
+<p><strong>PROBE POSITION ONLY</strong> is the single most important switch on this page:</p>
+<ul>
+<li><strong>On</strong>: routines measure and fill in <strong>PROBE RESULTS</strong> (X−/X+/Y−/Y+/Z− probed positions, X and Y WIDTH, DIAM, X and Y CENTER, EDGE Δ, EDGE ∠). Your work offset is not touched. Use this for inspection, for example "is this bore 25.00 mm?".</li>
+<li><strong>Off</strong>: routines also write the result into the active work offset (G54 unless you selected another). Use this to set up a job.</li>
+</ul>
+<p>Leave it <strong>on</strong> by default and switch it off only for the probing move that sets your zero. That habit prevents the classic surprise of a measurement silently moving your work offset.</p>
+<p><strong>RESET ALL DATA / X DATA RESET / Y DATA RESET</strong> clear the results panel.</p>
+<h2>The routines</h2>
+<p>Each routine page shows pictures of where to start and which way the probe will move. The common rules:</p>
+<ul>
+<li>The probe must be in the spindle with <strong>G43</strong> on.</li>
+<li><strong>Start above the part</strong>, within MAX Z DISTANCE of the top, unless the routine says to start below the edge.</li>
+<li>For routines that step off an edge, start <strong>within STEP OFF WIDTH of that edge, measured inward</strong>. The probe moves out by the step-off width, drops, and touches back toward you. Start too far in, and it drops onto the top of the part.</li>
+</ul>
+<h3>OUTSIDE CORNERS</h3>
+<p>A 3×3 grid of buttons:</p>
+<ul>
+<li><strong>Four corners</strong>: each touches the top (Z), then the two edges that meet at that corner, and sets X, Y and Z zero on that corner. Start over the part near the chosen corner, within step-off width of both edges.</li>
+<li><strong>Four edges</strong>: top-left side, front, back, right side. Each finds one edge (and Z).</li>
+<li><strong>The center button</strong>: touches Z only.</li>
+</ul>
+<h3>INSIDE CORNERS</h3>
+<p>The same idea inside a pocket or against a fixture's inside corner, plus single-direction X+/X−/Y+/Y− touches and a Z touch. Start inside, below the top edge, within MAX X/Y DISTANCE of the walls.</p>
+<h3>BOSS AND POCKET</h3>
+<p>Six buttons in two rows:</p>
+<table>
+<thead>
+<tr>
+<th>Top row (round)</th>
+<th>Bottom row (rectangular)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Round pocket (start below the top edge)</td>
+<td>Rect pocket (start below the top edge)</td>
+</tr>
+<tr>
+<td>Round boss (start above, centered)</td>
+<td><strong>Rect boss</strong> (start above, centered)</td>
+</tr>
+<tr>
+<td>Round pocket, center start (start above)</td>
+<td>Rect pocket, center start (start above)</td>
+</tr>
+</tbody>
+</table>
+<p>They find the center, and for round features the diameter. <strong>Hints matter</strong>: for bosses and center-start pockets the probe steps out to half the hint (X/Y HINT, or DIAM for round) plus the step-off width before it drops. Enter sizes within a few millimetres.</p>
+<p>RECT BOSS is the everyday "center of the stock" routine. See the diagram in chapter 3.</p>
+<h3>RIDGE AND VALLEY</h3>
+<p>Finds the center of a rib (ridge) or a slot (valley), in X or in Y, with its own X/Y hints. Use it for the center of a T-slot, a keyway or a narrow bar.</p>
+<h3>EDGE ANGLE</h3>
+<p>Touches one edge at two points, EDGE WIDTH apart, and reports the angle (EDGE ∠) and the offset between the touches (EDGE Δ). Use it to check that a vise or part is square to the axes. <strong>SET ROTATION WCO</strong> stores the angle as the work offset's rotation (the R column on the OFFSETS tab), so programs run rotated to match a part that is clamped crooked.</p>
+<blockquote>
+<p><strong>On the 6040.</strong> Two edge-angle readings on a glued-down 1-2-3 block, plus two RECT BOSS measurements in both orientations, showed the X axis measuring 0.323 % long. The ballscrew's lead was slightly under 5 mm. X SCALE was corrected from 320 to 321.034 steps/mm, and the block then measured right to 0.001 mm. A probe and a gauge block make a cheap machine calibration kit.</p>
+</blockquote>
+<h3>ROTARY AXIS</h3>
+<p>Probing routines for a 4th axis: centering on a cylinder in the rotary chuck.</p>
+<h3>PROBE HELP</h3>
+<p>Pages of built-in diagrams for every routine (PREV PAGE / NEXT PAGE). Worth reading once.</p>
+<h2>A good probing habit</h2>
+<ol>
+<li>Load the probe with <strong>M6 G43</strong>, and tap-test it.</li>
+<li>Check hints and the starting position against the routine's picture.</li>
+<li>First run with <strong>PROBE POSITION ONLY on</strong>, and check the numbers make sense.</li>
+<li>Turn it off, run again to set the offset, then turn it back on.</li>
+<li>Sanity-check Z with a ruler before the first cut (chapter 3, step 5).</li>
+</ol>
+<div style="page-break-before: always"></div><h1>6. The tool setter, and measuring every tool automatically</h1>
+<p>A tool setter is a switch at a fixed spot on the table. Lowering a cutter onto it tells LinuxCNC exactly how far that cutter's tip sits below the spindle reference, which is its tool length. With one, tool changes stop being a source of depth errors.</p>
+<p><img alt="How the tool setter measures tool length" src="diagrams/tool-setter.svg" /></p>
+<h2>One-time setup (PROBING → TOOL SETTER)</h2>
+<h3>1. Wire it to the probe input</h3>
+<p>LinuxCNC has one probe input (<code>motion.probe-input</code>). If you have a 3D probe, a touch plate and a setter, OR them together in HAL so any of them triggers probing. On the reference machine the setter is normally-closed, so its input is inverted (<code>input-06-not</code>) before the OR. See <code>config/6040_7i96s/hallib/6040_7i96s.hal</code>.</p>
+<h3>2. Set the touch-off position (G30)</h3>
+<ol>
+<li>Jog the spindle so its centerline is over the middle of the setter's button.</li>
+<li>Raise Z to the top (machine Z0).</li>
+<li>Press <strong>SET TOOL TOUCH OFF POS</strong>.</li>
+</ol>
+<p>This stores the position as G30 (parameters #5181–#5183). <strong>GO TO G30</strong> returns there.</p>
+<h3>3. Set SPINDLE ZERO (#3010)</h3>
+<p>SPINDLE ZERO is the distance from machine Z0 down to the setter's trigger point, measured with the reference surface: the bare collet nut, or whatever you call "length zero". Probe Basic's own help text says it must be entered as a positive number.</p>
+<ul>
+<li><strong>The direct way</strong>: with no tool in the spindle (nut only), jog down slowly until the setter triggers, and enter the distance travelled.</li>
+<li><strong>PROBE SPINDLE NOSE ZERO</strong> automates this if your spindle nose can safely press the setter.</li>
+</ul>
+<blockquote>
+<p><strong>On the 6040.</strong> SPINDLE ZERO was first worked out from a caliper measurement of a tool's stick-out. That turned out to be 0.565 mm off, because measuring stick-out by caliper is harder than it looks. Measuring with the bare nut (49.1901 mm) fixed it, and every stored tool length and the G54 Z were shifted together by the same amount. Lesson: calibrate the reference directly. Don't derive it from a measured tool.</p>
+</blockquote>
+<h3>4. Feeds and distances</h3>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>#</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fast probe FR</td>
+<td>3004</td>
+<td>First touch. Slow enough that the overshoot after triggering doesn't hurt the setter.</td>
+</tr>
+<tr>
+<td>Slow probe FR</td>
+<td>3005</td>
+<td>Measuring touch. 0 skips it.</td>
+</tr>
+<tr>
+<td>Traverse FR</td>
+<td>3006</td>
+<td>Moves to and from the setter.</td>
+</tr>
+<tr>
+<td>Z max travel</td>
+<td>3007</td>
+<td>How far down it searches before failing. Must reach your shortest tool.</td>
+</tr>
+<tr>
+<td>XY max travel</td>
+<td>3008</td>
+<td>For diameter probing.</td>
+</tr>
+<tr>
+<td>Retract dist</td>
+<td>3009</td>
+<td>Back-off between the two touches.</td>
+</tr>
+<tr>
+<td>TOOL DIAM OFFSET + direction</td>
+<td>3012/3013</td>
+<td>Offsets large tools (face mills) by their radius so the edge, not the empty center, lands on the button.</td>
+</tr>
+</tbody>
+</table>
+<h2>Measuring a tool by hand</h2>
+<p>Load the tool (T box + <strong>M6 G43</strong>, or <code>T5 M6</code> in MDI), then press <strong>TOUCH OFF CURRENT TOOL</strong> on the TOOL tab. The machine:</p>
+<ol>
+<li>lifts to machine Z0 and moves to the G30 position,</li>
+<li>probes down fast, retracts, probes slowly,</li>
+<li>lifts back to Z0,</li>
+<li>stores the length in the tool table, and applies <strong>G43</strong> for that tool.</li>
+</ol>
+<p>Repeatability on the reference machine: about 0.007 mm.</p>
+<h2>Measuring at every tool change (M6 remap)</h2>
+<p>By default, <code>M6</code> in LinuxCNC only asks you to change the tool; it doesn't measure it. Unless you measured each tool beforehand, a program would then run with whatever length is in the table. Changing what M6 does is called a <strong>remap</strong>. This one makes every tool change, from a program, MDI or the M6 G43 button, measure the new tool.</p>
+<p>The subroutine, <code>subroutines/pb_m6_touchoff.ngc</code>:</p>
+<pre><code>o&lt;pb_m6_touchoff&gt; sub
+M5                          (spindle off before anything moves to the setter)
+M6                          (built-in manual change: Z up, insert-tool prompt)
+M66 E0 L0                   (stop read-ahead so the new tool is current)
+o100 if [#&lt;_task&gt; EQ 1]
+  o110 if [[#&lt;selected_tool&gt; GT 0] AND [#&lt;selected_tool&gt; NE #3014]]
+    o&lt;tool_touch_off&gt; call
+  o110 endif
+o100 endif
+o&lt;pb_m6_touchoff&gt; endsub [1]
+M2
+</code></pre>
+<p>And in the INI:</p>
+<pre><code>[RS274NGC]
+REMAP = M6 modalgroup=6 prolog=change_prolog ngc=pb_m6_touchoff epilog=change_epilog
+
+[PYTHON]
+PATH_PREPEND = python
+TOPLEVEL = python/toplevel.py
+</code></pre>
+<p>The <code>python/</code> folder holds LinuxCNC's standard remap glue (<code>toplevel.py</code> → <code>remap.py</code> → <code>stdglue.py</code>). Probe Basic's sample configs already include it.</p>
+<p>Details that matter:</p>
+<ul>
+<li><strong>Inside a remap subroutine, <code>M6</code> means the built-in tool change.</strong> It doesn't call itself.</li>
+<li><strong><code>#&lt;_task&gt; EQ 1</code></strong> is true only when the program really runs. The preview interpreter has <code>_task = 0</code>. Without this guard, the preview tries to "probe", the probe never triggers, and the preview stops after a few lines.</li>
+<li><strong>The probe tool is skipped</strong>, so the setter never presses the probe's stylus. T0 (empty spindle) is skipped too.</li>
+<li><strong><code>endsub [1]</code></strong>: the standard epilog requires the remap to return a value.</li>
+<li><strong>Comments can't contain parentheses.</strong> <code>(T99 (probe))</code> is an error in G-code. The interpreter stops with "nested comment".</li>
+</ul>
+<p>After enabling it, a Fusion 360 program with plain <code>T5 M6</code> lines measures every tool with no edits. See chapter 10.</p>
+<div style="page-break-before: always"></div><h1>7. The tool table</h1>
+<h2>Where it lives</h2>
+<p>Probe Basic 1.0.x can keep the tool table in an <strong>SQLite database</strong> instead of LinuxCNC's classic <code>tool.tbl</code> text file. The INI selects it:</p>
+<pre><code>[EMCIO]
+DB_PROGRAM = ./tool_db.sh
+TOOL_DB_FILE = 6040_tools.db
+</code></pre>
+<p><code>tool_db.sh</code> starts QtPyVCP's <code>tool_db_backend</code>, which answers LinuxCNC's tool queries from the database. The TOOL tab edits the same file. One database is the single source of truth: diameter, length, remark and the ATC flag.</p>
+<h2>Columns</h2>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T</td>
+<td>Tool number: what <code>T5</code> and <code>H5</code> refer to.</td>
+</tr>
+<tr>
+<td>P</td>
+<td>Pocket. Only matters for an ATC.</td>
+</tr>
+<tr>
+<td>Z</td>
+<td>Tool length (from the setter).</td>
+</tr>
+<tr>
+<td>D</td>
+<td>Diameter: used by cutter compensation and the preview, and by the probe routines for the ball.</td>
+</tr>
+<tr>
+<td>ATC</td>
+<td>Whether the tool fits the automatic changer's carousel. Unused without an ATC.</td>
+</tr>
+<tr>
+<td>Remark</td>
+<td>Free text: maker, flute count, stick-out, collet.</td>
+</tr>
+</tbody>
+</table>
+<p>Edit cells, then <strong>SAVE TABLE</strong>. <strong>ADD TOOL</strong> and <strong>DELETE</strong> manage rows. <strong>UPDATE LOADED TOOL</strong> pushes edits for the tool in the spindle.</p>
+<h2>Numbering advice</h2>
+<ul>
+<li><strong>Use the same numbers as your CAM library.</strong> If Fusion's library has your 1/8" O-flute as tool 12, make it T12 here too. Then posted programs need no renumbering.</li>
+<li><strong>Reserve a high number for the probe</strong> (99 is conventional), so a program can never call it by accident.</li>
+<li><strong>Put stick-out and collet in the remark</strong>, so the next time you load the tool you set the same length.</li>
+</ul>
+<h2>If LinuxCNC says "tool not found in tool table"</h2>
+<p>The database file is probably fine, but LinuxCNC's in-memory copy isn't. A restart of LinuxCNC reloads it. On the reference machine this happened because a tool process from an earlier LinuxCNC session was still running alongside the new one. Chapter 11 has the full story and the fix.</p>
+<div style="page-break-before: always"></div><h1>8. Running programs</h1>
+<h2>Starting</h2>
+<p><strong>CYCLE START</strong> runs the loaded program. If it does nothing and the button doesn't highlight when you hover over it, the GUI considers the machine not ready. Check:</p>
+<ul>
+<li>the machine is on and homed (REF ALL shows <strong>HOMED</strong>),</li>
+<li>a program is loaded,</li>
+<li>nothing else (MDI, a probing routine) is still running.</li>
+</ul>
+<p>Toggling <strong>POWER</strong> off and on forces Probe Basic to re-check its state. That cleared a stuck CYCLE START on the reference machine after modes had been changed from outside the GUI.</p>
+<h2>Watching the first moves</h2>
+<ul>
+<li><strong>F slider at 25–50 %</strong> for the first plunge of any new program. Every feed move is scaled; rapids are not.</li>
+<li><strong>SINGLE BLOCK</strong> to step line by line through the start.</li>
+<li><strong>Dry run in the air.</strong> Temporarily raise G54 Z (for example 20 mm higher) and run the start of the program above the part. Put it back afterwards.</li>
+<li><strong>Test in scrap.</strong> Run the program once in wood or plastic before the expensive stock, as the reference machine did with plywood before aluminum.</li>
+</ul>
+<h2>Pausing and resuming</h2>
+<table>
+<thead>
+<tr>
+<th>You want to…</th>
+<th>Do this</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pause briefly (chips, check something)</td>
+<td><strong>FEED HOLD</strong>, then <strong>CYCLE START</strong>. Your place is kept. The spindle keeps running.</td>
+</tr>
+<tr>
+<td>Pause at a planned point</td>
+<td>Put <code>M1</code> in the program and light <strong>M01 BREAK</strong>, or use <code>M0</code> (always stops).</td>
+</tr>
+<tr>
+<td>Stop the spindle mid-job</td>
+<td>FEED HOLD, then STOP. Note the line number, and later use <strong>RUN FROM LINE</strong> at the start of an operation.</td>
+</tr>
+<tr>
+<td>Emergency</td>
+<td>E-stop. Everything stops; you will need to re-enable, and usually re-home.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>RUN FROM LINE</strong> starts partway through, but it doesn't replay what came before: position, tool, tool length, work offset, spindle and coolant. Start at a line where the program sets all of them itself. In Fusion output, that's the comment line that begins an operation, right before its <code>T… M6</code>.</p>
+<h2>Overrides during the job</h2>
+<ul>
+<li><strong>Feed</strong>: 100 % is what the CAM asked for. In soft materials it is usually safe to go above 100 % once you have heard the cut. In metal, raise it slowly and listen.</li>
+<li><strong>Spindle</strong>: adjusts rpm live. On a VFD controlled over Modbus the change is immediate.</li>
+<li><strong>Rapid</strong>: turn it down when a program has long rapids near clamps you are unsure of.</li>
+</ul>
+<h2>Dry cutting aluminum (no coolant)</h2>
+<p>Without coolant, the risk is chips being re-cut and welding to the flute, which snaps small cutters. On the reference machine:</p>
+<ul>
+<li><strong>Single-flute cutters</strong> (O-flute or 1F upcut): a deep flute, and the biggest possible chip per tooth.</li>
+<li><strong>Feed high enough to make real chips</strong>: about 0.05–0.1 mm per tooth programmed. Thin chips rub and heat the tool.</li>
+<li><strong>Adaptive (trochoidal) roughing</strong>: light radial engagement, full flute engagement in depth.</li>
+<li><strong>Air blast or vacuum at the cutter</strong> for the whole run. That matters more than any feed setting.</li>
+</ul>
+<div style="page-break-before: always"></div><h1>9. Conversational programming</h1>
+<p>The CONVERSATIONAL tab writes simple G-code from a form, with no CAM needed. Its pages:</p>
+<table>
+<thead>
+<tr>
+<th>Page</th>
+<th>Makes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>FACING</strong></td>
+<td>A zig-zag facing program over a rectangle. Good for surfacing a wasteboard or squaring stock.</td>
+</tr>
+<tr>
+<td><strong>HOLE OPS</strong></td>
+<td>Drilling, peck drilling, tapping and boring cycles, at positions from <strong>XY COORD</strong> (a list of points) or <strong>PATTERN</strong> (bolt circles and grids). <strong>THREAD MILL</strong> generates helical thread milling.</td>
+</tr>
+<tr>
+<td><strong>PERIMETER</strong></td>
+<td>A profile around a rectangle or circle.</td>
+</tr>
+<tr>
+<td><strong>POCKETS</strong></td>
+<td>Rectangular and circular pockets.</td>
+</tr>
+<tr>
+<td><strong>MISC</strong></td>
+<td>Smaller utilities.</td>
+</tr>
+</tbody>
+</table>
+<p>The general flow:</p>
+<ol>
+<li>Fill in the tool (number, diameter), spindle speed, feeds, depths and stepovers.</li>
+<li>Fill in the geometry.</li>
+<li>Post the program to a file, or send it straight to the loaded program.</li>
+<li>Check it in the preview like any other program, then set the work offset and run.</li>
+</ol>
+<blockquote>
+<p><strong>On the 6040.</strong> The first real use of the machine after the LinuxCNC conversion was a FACING program to surface the wasteboard: a 1" (25.4 mm) 3-flute surfacing bit over the full usable table. The start and end values are in <strong>work coordinates</strong>, so set the work offset before filling in the form, and check the preview (<strong>PGM EXT</strong>) before running. A wrong sign or an end value outside the travel shows up immediately as a facing area hanging off the table.</p>
+</blockquote>
+<div style="page-break-before: always"></div><h1>10. From CAM to Probe Basic (Fusion 360)</h1>
+<p>Any CAM that posts LinuxCNC G-code works. This chapter uses Fusion 360, as on the reference machine.</p>
+<h2>The post processor</h2>
+<p>Use Fusion's stock <strong>LinuxCNC</strong> post (<code>linuxcnc.cps</code>). It writes <code>.ngc</code> files with <code>G54</code>, <code>T# M6</code>, <code>G43 H#</code>, <code>S… M3</code> and the arcs LinuxCNC expects. Mach3 posts mostly work too, but they add Mach-isms and sometimes <code>.tap</code> extensions. The LinuxCNC post is cleaner.</p>
+<h2>Settings that matter</h2>
+<h3>"Manual tool change" in the tool library</h3>
+<p>Fusion tools have a <strong>Manual tool change</strong> checkbox. When it is ticked, the LinuxCNC post writes:</p>
+<pre><code>M0
+(MANUAL TOOL CHANGE TO T12)
+</code></pre>
+<p>That's a plain stop, <strong>not</strong> <code>T12 M6</code>. LinuxCNC then never learns which tool is loaded, an M6 remap never runs, and <code>G43 H12</code> uses whatever length is in the table. <strong>Untick it for every tool</strong>, so the post writes <code>T12 M6</code>. That gives a real tool change, measured by the M6 remap (chapter 6).</p>
+<h3>Tool numbers</h3>
+<p>Make Fusion's tool numbers match the Probe Basic tool table (chapter 7). The post's <code>T12 M6</code> and <code>G43 H12</code> then just work.</p>
+<h3>Work coordinate system and origin</h3>
+<p>In the Fusion setup, set <strong>WCS offset = 1</strong> (G54). Put the origin where you will probe it: for example the <strong>top center of the stock</strong>, matching a RECT BOSS on the stock. The stock top is Z0 if you probe the top; if you will face the stock, add the facing allowance in the setup's stock offsets.</p>
+<h3>Coolant</h3>
+<p>If the machine has no coolant outputs, set coolant to <em>Disabled</em> in the operations, so no <code>M7</code>/<code>M8</code> is posted.</p>
+<h2>Two Fusion gotchas found the hard way</h2>
+<ol>
+<li><strong>2D Contour on pocket floors cuts on the wrong side.</strong> A face-contour selection defaults to side type "Start outside". On pocket floor faces, that put the tool <em>outside</em> every pocket outline, through all the ribs. In the API, set <code>sideType = AlwaysInsideSideType</code>. In the UI, check the red arrow on every contour, and check the simulation.</li>
+<li><strong>Contours on a face with holes trace the holes too.</strong> An outside profile selected from the part's bottom face also tried to cut around each through-hole. Restrict it to the outer loop (<code>loopType = OnlyOutsideLoops</code>).</li>
+</ol>
+<p>Both were caught by checking the posted G-code against the model before cutting: a small script steps through every move and measures the cutter's clearance to the part. Simulate in Fusion at the very least.</p>
+<h2>Checking a program before it runs</h2>
+<ul>
+<li><strong>Preview in Probe Basic</strong>: the whole path should draw, and <strong>PGM EXT</strong> should frame what you expect.</li>
+<li><strong>Deepest Z</strong>: search the file for the most negative Z. It should be the deepest feature, or a through cut slightly into the spoilboard or tape, never more.</li>
+<li><strong>Tool calls</strong>: every <code>T# M6</code> should be followed by <code>G43 H#</code> with the same number.</li>
+<li><strong>First moves</strong>: run with the feed override low, or in the air.</li>
+</ul>
+<div style="page-break-before: always"></div><h1>11. Troubleshooting (every one of these happened)</h1>
+<h3>Z zero is off by exactly the probe's length</h3>
+<p><strong>Cause:</strong> The probe was in the spindle, but G43 wasn't active when you probed. LinuxCNC measured with the collet nut as the reference, so Z0 ended up one probe-length (46.87 mm here) too high.
+<strong>Fix:</strong> Load the probe with <strong>T 99 → M6 G43</strong>, and check that the G43 button is lit and LENGTH shows the probe length. Re-probe, or correct G54 Z by subtracting the probe length.
+<strong>Check:</strong> With the probe loaded and G43 on, the DRO Z equals the ball's real height above the part.</p>
+<h3>"Requested tool 99 not found in tool table" (but it's in the table)</h3>
+<p><strong>Cause:</strong> LinuxCNC's in-memory tool table was corrupted. An <code>io</code> process (and its tool-database backend) from an earlier LinuxCNC session had never exited. Two copies fought over the shared tool-table memory, and a tool-table reload made it visible.
+<strong>Fix:</strong> Close LinuxCNC. Check <code>pgrep -a -f "io -ini"</code>: there should be no <code>io</code> processes left. Kill any leftovers, then start LinuxCNC again. After a restart there should be exactly one <code>io</code> and one <code>tool_db_backend</code>.</p>
+<h3>The preview shows only a few lines of the program</h3>
+<p><strong>Cause:</strong> The program calls a subroutine that probes (a tool touch-off, for example). The preview interpreter can't probe, the routine aborts with "probe failed", and the preview stops there.
+<strong>Fix:</strong> Wrap such calls in <code>o100 if [#&lt;_task&gt; EQ 1]</code> … <code>o100 endif</code>. <code>_task</code> is 1 only in the real run.</p>
+<h3>CYCLE START does nothing and doesn't highlight</h3>
+<p><strong>Cause:</strong> The GUI thinks the machine isn't ready. It happened after modes were switched from outside the GUI, by a script over SSH.
+<strong>Fix:</strong> Toggle <strong>POWER</strong> off and on. Check homed status and that a program is loaded. Look at the STATUS tab.</p>
+<h3>"Motion enabled after reaching a coordinate soft limit with active external offsets"</h3>
+<p><strong>Cause:</strong> An informational note. The machine was switched on while an axis sat exactly on a soft limit (Z at machine 0 after a tool change), and the config has external offsets enabled even though they aren't used.
+<strong>Fix:</strong> Nothing. It is harmless.</p>
+<h3>"Probe move would exceed Z negative limit" on a second touch-off</h3>
+<p><strong>Cause:</strong> LinuxCNC rejects a G38 probe move if its full search length would pass the soft limit, even if the probe would trigger sooner.
+<strong>Fix:</strong> Clamp the search distance to the room left above the limit (see <code>touch_plate.ngc</code>).</p>
+<h3>"G38.2 move finished without making contact" (but it touched)</h3>
+<p><strong>Cause:</strong> The touch plate or probe was moved, or lifted, between the fast and slow touches. The second, slow touch then found nothing.
+<strong>Fix:</strong> Leave the plate in place until the routine finishes and lifts.</p>
+<h3>Probing writes your work offset when you only wanted to measure</h3>
+<p><strong>Cause:</strong> PROBE POSITION ONLY was off.
+<strong>Fix:</strong> Leave it on by default. Turn it off only for the run that sets the zero.</p>
+<h3>X and Y calibrate differently on a ring gauge</h3>
+<p><strong>Cause:</strong> Different backlash per axis. A single probe calibration offset can't correct both.
+<strong>Fix:</strong> Measure backlash with a dial indicator, set BACKLASH per joint in the INI, then recalibrate.</p>
+<h3>Parts come out the wrong size by a fixed percentage on one axis</h3>
+<p><strong>Cause:</strong> Steps per mm (SCALE) don't match the real ballscrew lead.
+<strong>Fix:</strong> Probe a gauge block or 1-2-3 block in two lengths along that axis, and correct SCALE by the ratio. Using the difference of two lengths cancels the probe and backlash terms. On the reference machine: X 320 → 321.034.</p>
+<h3>The VFD shows Err16 when LinuxCNC is closed</h3>
+<p><strong>Cause:</strong> Normal on a Modbus spindle. The VFD's comms-timeout protection trips when nothing polls it.
+<strong>Fix:</strong> None needed. The Modbus init list sends a fault reset when LinuxCNC starts.</p>
+<h3>A G-code comment with parentheses breaks a subroutine</h3>
+<p><strong>Cause:</strong> G-code comments can't nest. <code>(T99 (the probe))</code> is an error.
+<strong>Fix:</strong> Use <code>(T99 = the probe)</code>.</p>
+<div style="page-break-before: always"></div><h1>Appendix A. Probe Basic parameters (#3000–#3058)</h1>
+<p>Probe Basic stores its settings as numbered parameters in the LinuxCNC parameter file (<code>.var</code>). The screen fields are bound to these numbers, so the values persist across restarts and you can set them from MDI (for example <code>#3026 = 200</code>). The screen updates when the file changes.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Name in the subroutines</th>
+<th>Screen / meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3000</td>
+<td>activate_programmable_coolant</td>
+<td>Settings: programmable coolant on (1)</td>
+</tr>
+<tr>
+<td>3001</td>
+<td>horizontal_spindle_nozzle_dist</td>
+<td>Settings: nozzle horizontal distance</td>
+</tr>
+<tr>
+<td>3002</td>
+<td>vertical_spindle_nozzle_dist</td>
+<td>Settings: nozzle vertical distance</td>
+</tr>
+<tr>
+<td>3003</td>
+<td>pc_angle_offset</td>
+<td>Settings: nozzle angle offset</td>
+</tr>
+<tr>
+<td>3004</td>
+<td>probe_fast_fr (tool setter)</td>
+<td>Tool setter: fast probe feed</td>
+</tr>
+<tr>
+<td>3005</td>
+<td>probe_slow_fr (tool setter)</td>
+<td>Tool setter: slow probe feed (0 = single touch)</td>
+</tr>
+<tr>
+<td>3006</td>
+<td>probe_traverse_fr (tool setter)</td>
+<td>Tool setter: traverse feed</td>
+</tr>
+<tr>
+<td>3007</td>
+<td>max_z_distance (tool setter)</td>
+<td>Tool setter: Z max travel</td>
+</tr>
+<tr>
+<td>3008</td>
+<td>xy_max_travel</td>
+<td>Tool setter: XY max travel</td>
+</tr>
+<tr>
+<td>3009</td>
+<td>retract_distance</td>
+<td>Tool setter: retract between touches</td>
+</tr>
+<tr>
+<td>3010</td>
+<td>spindle_zero_height</td>
+<td>Tool setter: SPINDLE ZERO (positive)</td>
+</tr>
+<tr>
+<td>3011</td>
+<td>tool_diameter_probe_mode</td>
+<td>Tool setter: TOOL DIAM PROBE</td>
+</tr>
+<tr>
+<td>3012</td>
+<td>tool_diameter_offset_mode</td>
+<td>Tool setter: TOOL DIAM OFFSET</td>
+</tr>
+<tr>
+<td>3013</td>
+<td>tool_setter_offset_direction</td>
+<td>Tool setter: offset direction (0 left, 1 right, 2 front, 3 back)</td>
+</tr>
+<tr>
+<td>3014</td>
+<td>probe_tool_number</td>
+<td>Touch probe: probe tool #</td>
+</tr>
+<tr>
+<td>3015</td>
+<td>probe_slow_fr</td>
+<td>Touch probe: slow feed</td>
+</tr>
+<tr>
+<td>3016</td>
+<td>probe_fast_fr</td>
+<td>Touch probe: fast feed</td>
+</tr>
+<tr>
+<td>3017</td>
+<td>probe_traverse_fr</td>
+<td>Touch probe: traverse feed</td>
+</tr>
+<tr>
+<td>3018</td>
+<td>max_xy_distance</td>
+<td>Touch probe: max X/Y distance</td>
+</tr>
+<tr>
+<td>3019</td>
+<td>xy_clearance</td>
+<td>Touch probe: X/Y clearance</td>
+</tr>
+<tr>
+<td>3020</td>
+<td>max_z_distance</td>
+<td>Touch probe: max Z distance</td>
+</tr>
+<tr>
+<td>3021</td>
+<td>z_clearance</td>
+<td>Touch probe: Z clearance</td>
+</tr>
+<tr>
+<td>3022</td>
+<td>extra_probe_depth</td>
+<td>Touch probe: extra probe depth</td>
+</tr>
+<tr>
+<td>3023</td>
+<td>step_off_width</td>
+<td>Touch probe: step off width</td>
+</tr>
+<tr>
+<td>3024</td>
+<td>edge_width</td>
+<td>Edge angle: spacing of the two touches</td>
+</tr>
+<tr>
+<td>3025</td>
+<td>diameter_hint</td>
+<td>Round boss/pocket hint</td>
+</tr>
+<tr>
+<td>3026</td>
+<td>x_hint_boss_pocket</td>
+<td>Rect boss/pocket X hint</td>
+</tr>
+<tr>
+<td>3027</td>
+<td>y_hint_boss_pocket</td>
+<td>Rect boss/pocket Y hint</td>
+</tr>
+<tr>
+<td>3028</td>
+<td>x_hint_ridge_valley</td>
+<td>Ridge/valley X hint</td>
+</tr>
+<tr>
+<td>3029</td>
+<td>y_hint_ridge_valley</td>
+<td>Ridge/valley Y hint</td>
+</tr>
+<tr>
+<td>3030</td>
+<td>probe_mode</td>
+<td>PROBE POSITION ONLY (1 = measure only, 0 = write the work offset)</td>
+</tr>
+<tr>
+<td>3031</td>
+<td>wco_rotation</td>
+<td>SET ROTATION WCO</td>
+</tr>
+<tr>
+<td>3032</td>
+<td>calibration_offset</td>
+<td>Probe calibration offset</td>
+</tr>
+<tr>
+<td>3033</td>
+<td>cal_diameter</td>
+<td>Calibration ring/pin diameter</td>
+</tr>
+<tr>
+<td>3034 / 3035</td>
+<td>x_cal_width / y_cal_width</td>
+<td>Square calibration widths</td>
+</tr>
+<tr>
+<td>3048–3050</td>
+<td>xy/x/y_cal_axis</td>
+<td>Which calibration error to store</td>
+</tr>
+<tr>
+<td>3050–3058</td>
+<td>x0, y0, height, width, step, feeds, safe/search Z</td>
+<td>Surface-scan routine</td>
+</tr>
+</tbody>
+</table>
+<p>Other parameters Probe Basic relies on:</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5181–5183</td>
+<td>G30 position (tool setter touch-off position), machine coordinates</td>
+</tr>
+<tr>
+<td>5221–5223</td>
+<td>G54 X, Y, Z</td>
+</tr>
+<tr>
+<td>5400 / 5410</td>
+<td>Tool in spindle / its diameter</td>
+</tr>
+<tr>
+<td>5061–5063, 5070</td>
+<td>Last probe result X, Y, Z, and whether it triggered</td>
+</tr>
+</tbody>
+</table>
+<div style="page-break-before: always"></div><h1>Appendix B. The reference machine</h1>
+<p>Everything in this guide was done on this machine. The full details are in the repository: <code>hardware/wiring.md</code>, <code>hardware/vfd-mk100.md</code>, <code>firmware/README.md</code>, <code>machine.yaml</code> and the complete configuration in <code>config/6040_7i96s/</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Part</th>
+<th>What</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Machine</td>
+<td>Chinese 6040 router, 5 mm ballscrews, 380 × 567 × 105 mm travel, 4th axis</td>
+</tr>
+<tr>
+<td>Previous controller</td>
+<td>Mach3 + a USB motion card (RnR Eco Motion)</td>
+</tr>
+<tr>
+<td>Controller</td>
+<td>Mesa 7I96S (Ethernet), firmware 7i96s_pktv3</td>
+</tr>
+<tr>
+<td>PC</td>
+<td>Laptop, Intel i7-9750H, Debian 13 + LinuxCNC 2.9.10 PREEMPT_RT; Realtek NIC on r8168-dkms with ASPM/EEE off</td>
+</tr>
+<tr>
+<td>Steppers</td>
+<td>3 × DM542H, 1600 steps/rev, 3.76 A; A axis on a JP-1635A board</td>
+</tr>
+<tr>
+<td>Spindle</td>
+<td>GDZ-80 2.2 kW water-cooled, ER20, 24,000 rpm</td>
+</tr>
+<tr>
+<td>VFD</td>
+<td>MK100-1S2.2G-DK, 110 V, controlled over Modbus RS-485</td>
+</tr>
+<tr>
+<td>Inputs</td>
+<td>One switch per axis (home + limits), touch plate, PGFUN TP05C 3D probe, NC tool setter, NC E-stop</td>
+</tr>
+<tr>
+<td>Pendant</td>
+<td>XHC WHB04B-6 wireless</td>
+</tr>
+<tr>
+<td>Screen</td>
+<td>Probe Basic 1.0.3</td>
+</tr>
+</tbody>
+</table>
+<h2>Calibration results</h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Value</th>
+<th>How</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>X steps/mm</td>
+<td>321.034 (nominal 320)</td>
+<td>Probe + ring gauge + 1-2-3 block in two orientations. X read 0.323 % long.</td>
+</tr>
+<tr>
+<td>Y, Z steps/mm</td>
+<td>320</td>
+<td>The same test showed Y accurate.</td>
+</tr>
+<tr>
+<td>Tool setter repeatability</td>
+<td>about 0.007 mm</td>
+<td>Repeated touch-offs of one tool</td>
+</tr>
+<tr>
+<td>SPINDLE ZERO</td>
+<td>49.1901 mm</td>
+<td>Bare collet nut on the setter</td>
+</tr>
+<tr>
+<td>Probe length (T99)</td>
+<td>46.8736 mm</td>
+<td>On the setter, slow</td>
+</tr>
+<tr>
+<td>Probe ball</td>
+<td>1.998 mm</td>
+<td>Micrometer</td>
+</tr>
+<tr>
+<td>Probe calibration offset</td>
+<td>0.0471 mm</td>
+<td>24.995 mm ring gauge. X and Y differ by backlash.</td>
+</tr>
+</tbody>
+</table>
+<h2>How the conversion went, in brief</h2>
+<ol>
+<li>Built and tested the LinuxCNC config in simulation before the card arrived. Latency test; the Realtek NIC moved to the r8168 driver after r8169 produced packet errors.</li>
+<li>Card on the bench: <code>readhmid</code>, a 30-minute link test with 0 errors.</li>
+<li>Moved the wires from the Mach3 card. Two classic mistakes: a ground wire on the wrong terminal (steppers rough in one direction), and the limit-switch common landed on an input (flickering probe input).</li>
+<li>Rewired the stepper drivers common-anode at 5 V; homing, limits and travel set.</li>
+<li>Flashed PktUART firmware, wired RS-485 to the VFD (with the pair swapped), and set the VFD to standard Modbus (Pd-05 = 31). The spindle ran under LinuxCNC control.</li>
+<li>Added the E-stop, tool setter, 3D probe and pendant; calibrated the setter, probe and X scale.</li>
+<li>First job: a facing program for the wasteboard, then an isogrid plate (plywood test, then aluminum) from Fusion 360.</li>
+</ol></main></body></html>

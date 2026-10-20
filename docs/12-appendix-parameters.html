@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Appendix A. Probe Basic parameters (#3000–#3058)</title><link rel="stylesheet" href="assets/style.css"></head>
+<body><header class="top"><a href="index.html">Probe Basic, Explained</a></header>
+<main><h1>Appendix A. Probe Basic parameters (#3000–#3058)</h1>
+<p>Probe Basic stores its settings as numbered parameters in the LinuxCNC parameter file (<code>.var</code>). The screen fields are bound to these numbers, so the values persist across restarts and you can set them from MDI (for example <code>#3026 = 200</code>). The screen updates when the file changes.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Name in the subroutines</th>
+<th>Screen / meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3000</td>
+<td>activate_programmable_coolant</td>
+<td>Settings: programmable coolant on (1)</td>
+</tr>
+<tr>
+<td>3001</td>
+<td>horizontal_spindle_nozzle_dist</td>
+<td>Settings: nozzle horizontal distance</td>
+</tr>
+<tr>
+<td>3002</td>
+<td>vertical_spindle_nozzle_dist</td>
+<td>Settings: nozzle vertical distance</td>
+</tr>
+<tr>
+<td>3003</td>
+<td>pc_angle_offset</td>
+<td>Settings: nozzle angle offset</td>
+</tr>
+<tr>
+<td>3004</td>
+<td>probe_fast_fr (tool setter)</td>
+<td>Tool setter: fast probe feed</td>
+</tr>
+<tr>
+<td>3005</td>
+<td>probe_slow_fr (tool setter)</td>
+<td>Tool setter: slow probe feed (0 = single touch)</td>
+</tr>
+<tr>
+<td>3006</td>
+<td>probe_traverse_fr (tool setter)</td>
+<td>Tool setter: traverse feed</td>
+</tr>
+<tr>
+<td>3007</td>
+<td>max_z_distance (tool setter)</td>
+<td>Tool setter: Z max travel</td>
+</tr>
+<tr>
+<td>3008</td>
+<td>xy_max_travel</td>
+<td>Tool setter: XY max travel</td>
+</tr>
+<tr>
+<td>3009</td>
+<td>retract_distance</td>
+<td>Tool setter: retract between touches</td>
+</tr>
+<tr>
+<td>3010</td>
+<td>spindle_zero_height</td>
+<td>Tool setter: SPINDLE ZERO (positive)</td>
+</tr>
+<tr>
+<td>3011</td>
+<td>tool_diameter_probe_mode</td>
+<td>Tool setter: TOOL DIAM PROBE</td>
+</tr>
+<tr>
+<td>3012</td>
+<td>tool_diameter_offset_mode</td>
+<td>Tool setter: TOOL DIAM OFFSET</td>
+</tr>
+<tr>
+<td>3013</td>
+<td>tool_setter_offset_direction</td>
+<td>Tool setter: offset direction (0 left, 1 right, 2 front, 3 back)</td>
+</tr>
+<tr>
+<td>3014</td>
+<td>probe_tool_number</td>
+<td>Touch probe: probe tool #</td>
+</tr>
+<tr>
+<td>3015</td>
+<td>probe_slow_fr</td>
+<td>Touch probe: slow feed</td>
+</tr>
+<tr>
+<td>3016</td>
+<td>probe_fast_fr</td>
+<td>Touch probe: fast feed</td>
+</tr>
+<tr>
+<td>3017</td>
+<td>probe_traverse_fr</td>
+<td>Touch probe: traverse feed</td>
+</tr>
+<tr>
+<td>3018</td>
+<td>max_xy_distance</td>
+<td>Touch probe: max X/Y distance</td>
+</tr>
+<tr>
+<td>3019</td>
+<td>xy_clearance</td>
+<td>Touch probe: X/Y clearance</td>
+</tr>
+<tr>
+<td>3020</td>
+<td>max_z_distance</td>
+<td>Touch probe: max Z distance</td>
+</tr>
+<tr>
+<td>3021</td>
+<td>z_clearance</td>
+<td>Touch probe: Z clearance</td>
+</tr>
+<tr>
+<td>3022</td>
+<td>extra_probe_depth</td>
+<td>Touch probe: extra probe depth</td>
+</tr>
+<tr>
+<td>3023</td>
+<td>step_off_width</td>
+<td>Touch probe: step off width</td>
+</tr>
+<tr>
+<td>3024</td>
+<td>edge_width</td>
+<td>Edge angle: spacing of the two touches</td>
+</tr>
+<tr>
+<td>3025</td>
+<td>diameter_hint</td>
+<td>Round boss/pocket hint</td>
+</tr>
+<tr>
+<td>3026</td>
+<td>x_hint_boss_pocket</td>
+<td>Rect boss/pocket X hint</td>
+</tr>
+<tr>
+<td>3027</td>
+<td>y_hint_boss_pocket</td>
+<td>Rect boss/pocket Y hint</td>
+</tr>
+<tr>
+<td>3028</td>
+<td>x_hint_ridge_valley</td>
+<td>Ridge/valley X hint</td>
+</tr>
+<tr>
+<td>3029</td>
+<td>y_hint_ridge_valley</td>
+<td>Ridge/valley Y hint</td>
+</tr>
+<tr>
+<td>3030</td>
+<td>probe_mode</td>
+<td>PROBE POSITION ONLY (1 = measure only, 0 = write the work offset)</td>
+</tr>
+<tr>
+<td>3031</td>
+<td>wco_rotation</td>
+<td>SET ROTATION WCO</td>
+</tr>
+<tr>
+<td>3032</td>
+<td>calibration_offset</td>
+<td>Probe calibration offset</td>
+</tr>
+<tr>
+<td>3033</td>
+<td>cal_diameter</td>
+<td>Calibration ring/pin diameter</td>
+</tr>
+<tr>
+<td>3034 / 3035</td>
+<td>x_cal_width / y_cal_width</td>
+<td>Square calibration widths</td>
+</tr>
+<tr>
+<td>3048–3050</td>
+<td>xy/x/y_cal_axis</td>
+<td>Which calibration error to store</td>
+</tr>
+<tr>
+<td>3050–3058</td>
+<td>x0, y0, height, width, step, feeds, safe/search Z</td>
+<td>Surface-scan routine</td>
+</tr>
+</tbody>
+</table>
+<p>Other parameters Probe Basic relies on:</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5181–5183</td>
+<td>G30 position (tool setter touch-off position), machine coordinates</td>
+</tr>
+<tr>
+<td>5221–5223</td>
+<td>G54 X, Y, Z</td>
+</tr>
+<tr>
+<td>5400 / 5410</td>
+<td>Tool in spindle / its diameter</td>
+</tr>
+<tr>
+<td>5061–5063, 5070</td>
+<td>Last probe result X, Y, Z, and whether it triggered</td>
+</tr>
+</tbody>
+</table><nav class="pager"><span><a href="11-troubleshooting.html">← 11. Troubleshooting (every one of these happened)</a></span><span><a href="13-appendix-machine.html">Appendix B. The reference machine →</a></span></nav></main></body></html>

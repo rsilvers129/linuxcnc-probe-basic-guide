@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=6040 Router (Mesa)
+Exec=/usr/bin/linuxcnc '/home/USER/linuxcnc/configs/6040_7i96s/6040_7i96s.ini'
+Type=Application
+Comment=Real machine: Mesa 7I96S + Probe Basic
+Icon=linuxcncicon

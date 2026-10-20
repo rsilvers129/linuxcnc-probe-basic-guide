@@ -1,0 +1,4 @@
+tools/raw/
+tools/*.raw.md
+__pycache__/
+*.pyc

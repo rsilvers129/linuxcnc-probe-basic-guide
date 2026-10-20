@@ -1,0 +1,20 @@
+T1 P1 Z27.2046 D6.0000 ;6 mm 1F upcut flat HQMaster, 22 LOC / 45 OAL (6 mm collet) - measure on setter
+T2 P2 Z0.0000 D6.3500 ;1/4in ball, long (grips T2)
+T3 P3 Z0.0000 D1.0000 ;tapered ball R0.5 tip, 1/8in shank (grips T3)
+T4 P4 Z25.2421 D3.1750 ;1/8in 2-flute upcut flat (grips T4)
+T5 P5 Z0.0000 D1.0000 ;tapered ball R0.5 tip (Aspire finish T5) - grips T5 is R0.25
+T6 P6 Z0.0000 D25.4000 ;One inch Facer
+T7 P7 Z0.0000 D3.1750 ;placeholder
+T8 P8 Z0.0000 D6.3500 ;1/4in ball (Aspire roughing T8)
+T9 P9 Z0.0000 D3.1750 ;placeholder
+T10 P10 Z0.0000 D3.1750 ;placeholder
+T11 P11 Z0.0000 D3.1750 ;placeholder
+T12 P12 Z20.7575 D3.1750 ;1/8in 1F upcut O-flute HQMaster HQ-822, 17 LOC / 38.5 OAL - measure on setter
+T13 P13 Z0.0000 D3.1750 ;placeholder
+T15 P15 Z0.0000 D3.1750 ;placeholder
+T16 P16 Z0.0000 D3.1750 ;placeholder
+T17 P17 Z0.0000 D3.1750 ;placeholder
+T18 P18 Z0.0000 D8.0000 ;90deg chamfer mill, 1/4in shank, 8 mm max - measure on setter
+T19 P19 Z0.0000 D3.1750 ;placeholder
+T20 P20 Z0.0000 D3.1750 ;placeholder
+T99 P14 Z46.8736 D1.9980 ;3D Probe

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- READ-ONLY comms test for the MK100-1S2.2G-DK VFD (factory comms settings).
+     PD-00=5005 -> 9600 baud, PD-01=0 -> 8N2, PD-02=1 -> address 1, PD-05=31 -> standard Modbus.
+     MK100 manual 13.3: only ONE register per read, so every read uses count 1. Nothing is written. -->
+<mesamodbus baudrate="9600" parity="N" stopbits="2" duplex="half" interval="100000">
+  <devices>
+    <device address="1" name="vfd"><description>MK100 spindle VFD</description></device>
+  </devices>
+  <commands>
+    <command device="vfd" function="R_REGISTERS" address="0x3000" count="1" haltype="HAL_U32" modbustype="U_AB">
+      <pin name="state" /><description>1 = fwd run, 2 = rev run, 3 = stop</description>
+    </command>
+    <command device="vfd" function="R_REGISTERS" address="0x1001" count="1" haltype="HAL_U32" modbustype="U_AB">
+      <pin name="freq" /><description>running frequency (expect 0.01 Hz units)</description>
+    </command>
+    <command device="vfd" function="R_REGISTERS" address="0x1002" count="1" haltype="HAL_U32" modbustype="U_AB">
+      <pin name="busvolt" /><description>DC bus voltage</description>
+    </command>
+    <command device="vfd" function="R_REGISTERS" address="0x1004" count="1" haltype="HAL_U32" modbustype="U_AB">
+      <pin name="current" /><description>output current</description>
+    </command>
+    <command device="vfd" function="R_REGISTERS" address="0x8000" count="1" haltype="HAL_U32" modbustype="U_AB">
+      <pin name="fault" /><description>fault code, 0 = none</description>
+    </command>
+  </commands>
+</mesamodbus>

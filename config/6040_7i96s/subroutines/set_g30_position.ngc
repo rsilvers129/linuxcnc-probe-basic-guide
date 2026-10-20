@@ -1,0 +1,16 @@
+o<set_g30_position> sub
+
+o100 if [1 EQ 1]
+    (G30.1 records the tool touch off position in the var file)
+    G30.1
+o100 endif
+
+#1000 = #5181
+
+#1001 = #5182
+
+#1002 = #5183
+
+o<set_g30_position> endsub
+
+M2

@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 470" font-family="Helvetica, Arial, sans-serif" font-size="15">
+  <title>Tool length offset (G43) and the work Z zero</title>
+  <rect width="760" height="470" fill="#ffffff"/>
+  <defs>
+    <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#333"/>
+    </marker>
+  </defs>
+  <!-- spindle -->
+  <rect x="150" y="30" width="90" height="120" fill="#c9cdd3" stroke="#555"/>
+  <text x="160" y="95">spindle</text>
+  <!-- collet nut -->
+  <polygon points="160,150 230,150 220,180 170,180" fill="#9aa1aa" stroke="#555"/>
+  <text x="245" y="172" fill="#333">collet nut face = reference ("spindle nose")</text>
+  <line x1="120" y1="180" x2="700" y2="180" stroke="#888" stroke-dasharray="4 4"/>
+  <!-- tool -->
+  <rect x="188" y="180" width="14" height="150" fill="#6b4fb3"/>
+  <text x="96" y="262" fill="#6b4fb3">tool</text>
+  <!-- tool length arrow -->
+  <line x1="300" y1="182" x2="300" y2="328" stroke="#6b4fb3" stroke-width="2" marker-start="url(#a2)" marker-end="url(#a2)"/>
+  <text x="310" y="250" fill="#6b4fb3" font-weight="bold">tool length (tool table)</text>
+  <text x="310" y="270" fill="#6b4fb3">measured on the tool setter</text>
+  <line x1="120" y1="330" x2="700" y2="330" stroke="#888" stroke-dasharray="4 4"/>
+  <text x="560" y="325" fill="#333">tool tip</text>
+  <!-- stock -->
+  <rect x="120" y="370" width="440" height="70" fill="#e3d2b0" stroke="#8a6d3b" stroke-width="2"/>
+  <text x="130" y="425" fill="#5c4520">stock</text>
+  <line x1="100" y1="370" x2="700" y2="370" stroke="#1f6fd1" stroke-width="2"/>
+  <text x="575" y="392" fill="#1f6fd1" font-weight="bold">work Z0 (G54 Z)</text>
+  <line x1="640" y1="332" x2="640" y2="368" stroke="#1f6fd1" stroke-width="2" marker-start="url(#a2)" marker-end="url(#a2)"/>
+  <text x="575" y="355" fill="#1f6fd1">DRO Z</text>
+  <!-- explanation -->
+  <text x="20" y="460" font-size="14">G43 Hn makes Z refer to the tip of tool n. Without G43 (G49), Z refers to the nut face.</text>
+</svg>

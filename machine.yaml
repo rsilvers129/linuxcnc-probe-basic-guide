@@ -1,0 +1,93 @@
+# Reference machine facts (structured, for people and AI assistants).
+# Values are as built and verified, October 2026. Units: mm, rpm, A, V unless stated.
+
+machine:
+  type: Chinese 6040 router, ballscrews, 4th axis
+  travel: {x: 380, y: 567, z: 105}          # soft limits, from the original Mach3 profile; owner-set
+  soft_limits:
+    x: [0, 380]
+    y: [0, 567]
+    z: [-105, 0]                             # Z0 = top of travel
+    a: [-99999, 99999]                       # rotary, not wrapped
+  homing:
+    x: {direction: minus, switch: INPUT0, home_offset: -4}
+    y: {direction: minus, switch: INPUT1, home_offset: -4}
+    z: {direction: plus,  switch: INPUT2, home_offset: 4, sequence_first: true}
+    a: {homes_in_place: true}
+    one_switch_per_axis: true                # same input = home + both limits
+  ballscrew_lead_nominal: 5
+  scale_steps_per_mm: {x: 321.034, y: 320.0, z: 320.0}   # X calibrated: probe + gauge block, lead slightly < 5 mm
+  scale_steps_per_deg_a: 26.666667
+  velocity_max_mm_s: 46.666667               # 2800 mm/min
+  accel_mm_s2: 240
+
+drives:
+  xyz: {model: DM542H, steps_per_rev: 1600, current_peak: 3.76, idle_half_current: true,
+        dip: "SW1 on, SW2 off, SW3 off (3.76 A peak); SW4 off (half current at rest)",
+        wiring: "common-anode 5 V: PUL+/DIR+ to TB1 +5V, PUL-/DIR- to STEPn-/DIRn-"}
+  a:   {model: JP-1635A board, wiring: "common-anode: +5V to TB1 +5V, PU to STEP3-, DR to DIR3-"}
+  step_timing_ns: {dirsetup: 10000, dirhold: 10000, steplen: 5000, stepspace: 5000}
+  invert: {step: [0, 0, 0, 0], dir: [1, 0, 0, 1]}   # X Y Z A
+
+controller:
+  card: Mesa 7I96S
+  firmware: 7i96s_pktv3.bin
+  firmware_sha256: 2b4a2066249fe2934a2ccb22c226c959dccf072d6647273e5b6696e488646c30
+  hm2_config: "num_encoders=1 num_pwmgens=1 num_stepgens=5"
+  ip: 10.10.10.10                            # jumpers W4 down, W5 up (EEPROM)
+  pc_port_ip: 10.10.10.1/24
+  servo_period_ns: 1000000
+  logic_power: 5 V on P4 (isolated supply recommended)
+
+pc:
+  os: Debian 13 trixie, PREEMPT_RT 6.12
+  linuxcnc: 2.9.10 (uspace)
+  probe_basic: 1.0.3
+  qtpyvcp: 6.0.7
+  ethernet: Realtek RTL8111/8168 -> r8168-dkms 8.055.00-1, options aspm=0 dynamic_aspm=0 eee_enable=0 (in initramfs)
+  latency_typical_us: 23
+
+inputs:   # TB3, INPUT COMMON (pin 12) = +24 V; TRUE while current flows
+  INPUT0: {pin: 1, device: X home/limit, contact: NO}
+  INPUT1: {pin: 2, device: Y home/limit, contact: NO}
+  INPUT2: {pin: 3, device: Z home/limit, contact: NO}
+  INPUT3: {pin: 4, device: touch plate, contact: NO, thickness: 20.15}
+  INPUT4: {pin: 5, device: PGFUN TP05C 3D probe, contact: NPN-NO, power: same +24 V as INPUT COMMON}
+  INPUT5: {pin: 6, device: latching E-stop, contact: NC, hal: iocontrol.0.emc-enable-in}
+  INPUT6: {pin: 7, device: tool setter tool signal, contact: NC, hal: input-06-not}
+  switch_common: 24 V V-
+  probe_input: "INPUT3 OR INPUT4 OR NOT INPUT6 -> motion.probe-input"
+
+spindle:
+  motor: GDZ-80 2.2 kW water-cooled, ER20, 110 V
+  max_rpm: 24000                             # 400 Hz
+  min_rpm: 6000
+  vfd: MK100-1S2.2G-DK (RATTMMOTOR), 110 V, 2.2 kW
+  control: Modbus RTU over 7I96S PktUART
+  rs485_wiring: "TB2-16<->18 and 17<->19 jumpered; 16/18 -> VFD 485-, 17/19 -> VFD 485+; TB2-15 -> COM; W7 termination off"
+  serial: {baud: 9600, format: 8N2, address: 1}
+  vfd_params: {Pd-00: 5005, Pd-01: 0, Pd-02: 1, Pd-04: 10, Pd-05: 31, P0-02: 2, P0-03: 9, P0-10: 4000, P0-17: 100, P0-18: 100}
+  registers: {command: "2000H (1 fwd, 2 rev, 6 stop, 7 reset)", speed: "1000H (10000 = 100%)", freq: "1001H (0.1 Hz)",
+              current: "1004H (0.01 A)", state: 3000H, fault: 8000H}
+  at_speed: "near: within 2 % or 100 rpm"
+
+probing:
+  probe_tool: 99
+  probe_ball_measured: 1.998
+  probe_length: 46.8736                      # from the collet-nut reference
+  probe_cal_offset: 0.047144                 # ring gauge 24.995, Y-axis based (X differs by backlash)
+  setter_g30_machine: {x: 350, y: 515, z: 0}
+  setter_spindle_zero: 49.1901               # #3010, measured with the bare collet nut
+  setter_feeds: {fast: 200, slow: 25, traverse: 1500, z_max_travel: 50, retract: 2}
+  setter_repeatability: 0.007
+  length_reference: collet nut face
+
+pendant:
+  model: XHC WHB04B-6 (USB 10ce:eb93)
+  driver: xhc-whb04b-6 -HsfB
+  mdi_buttons: {"00": "G53 G0 Z0", "01": "o<go_to_zero> call", "02": "o<touch_plate> call"}
+
+known_open_items:
+  - backlash not measured yet (X/Y differ by ~0.03-0.04 mm); add BACKLASH per joint after dial-indicator measurement
+  - tool setter stroke-protect (NC overtravel) contact not wired
+  - M6 remap (measure every tool) staged; enable after a live test (see book chapter 6)

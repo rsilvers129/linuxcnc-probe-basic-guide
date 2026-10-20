@@ -1,0 +1,191 @@
+# 6040 router - Mesa 7I96S hardware HAL (Probe Basic)
+# Built 2026-10-11 by the Windows-side Claude over SSH.
+# Every hm2 pin/param name below was checked against the live card's dump:
+#   ~/linuxcnc/hm2_7i96s_pins.txt and hm2_7i96s_params.txt (2026-10-10).
+# Wiring: "7i96S wiring and setup plan.md". Layout follows LinuxCNC's
+# sample config hm2-stepper/7i96s.ini + hm2-stepper-eth.hal.
+
+# ---------------------------------------------------------------
+# Core
+# ---------------------------------------------------------------
+loadrt [KINS]KINEMATICS
+loadrt [EMCMOT]EMCMOT servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[KINS]JOINTS num_dio=6 num_aio=3
+loadrt hostmot2
+# config string written out here: twopass wraps [HOSTMOT2](CONFIG) in {} and hm2 rejects the brace
+loadrt [HOSTMOT2](DRIVER) board_ip=[HOSTMOT2](BOARD_IP) config="num_encoders=1 num_pwmgens=1 num_stepgens=5"
+# Spindle VFD over RS-485 Modbus (PktUART on TB2-16..19); map in modbus/mk100.mbccs
+loadrt hm2_modbus ports="hm2_[HOSTMOT2](BOARD).0.pktuart.0" mbccbs="/home/USER/linuxcnc/configs/6040_7i96s/modbus/mk100.mbccb"
+loadrt mux4 names=spindle_cmd
+loadrt near names=spindle_near
+loadrt scale names=spindle_rps
+loadrt conv_u32_float names=vfd_fault_f
+loadrt comp names=vfd_fault_cmp
+loadrt or2 names=probe_or,probe_or2,spindle_fault_or
+
+addf hm2_[HOSTMOT2](BOARD).0.read          servo-thread
+addf probe_or                              servo-thread
+addf probe_or2                             servo-thread
+addf motion-command-handler                servo-thread
+addf motion-controller                     servo-thread
+addf spindle_cmd                           servo-thread
+addf hm2_modbus.0.process                  servo-thread
+addf spindle_rps                           servo-thread
+addf spindle_near                          servo-thread
+addf vfd_fault_f                           servo-thread
+addf vfd_fault_cmp                         servo-thread
+addf spindle_fault_or                      servo-thread
+addf hm2_[HOSTMOT2](BOARD).0.write         servo-thread
+
+# ---------------------------------------------------------------
+# Joints: stepgen 0 = X, 1 = Y, 2 = Z (DM542H, + outputs), 3 = A (JP-1635A, - outputs)
+# ---------------------------------------------------------------
+
+# X - joint 0
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.00.dirsetup        [JOINT_0]DIRSETUP
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.00.dirhold         [JOINT_0]DIRHOLD
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.00.steplen         [JOINT_0]STEPLEN
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.00.stepspace       [JOINT_0]STEPSPACE
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.00.position-scale  [JOINT_0]SCALE
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.00.maxvel          [JOINT_0]STEPGEN_MAXVEL
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.00.maxaccel        [JOINT_0]STEPGEN_MAXACCEL
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.00.step_type       0
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.00.step.invert_output       [JOINT_0]STEP_INVERT
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.00.direction.invert_output  [JOINT_0]DIR_INVERT
+net x-enable  joint.0.amp-enable-out  => hm2_[HOSTMOT2](BOARD).0.stepgen.00.enable
+net x-pos-cmd joint.0.motor-pos-cmd   => hm2_[HOSTMOT2](BOARD).0.stepgen.00.position-cmd
+net x-pos-fb  hm2_[HOSTMOT2](BOARD).0.stepgen.00.position-fb => joint.0.motor-pos-fb
+
+# Y - joint 1
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.01.dirsetup        [JOINT_1]DIRSETUP
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.01.dirhold         [JOINT_1]DIRHOLD
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.01.steplen         [JOINT_1]STEPLEN
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.01.stepspace       [JOINT_1]STEPSPACE
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.01.position-scale  [JOINT_1]SCALE
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.01.maxvel          [JOINT_1]STEPGEN_MAXVEL
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.01.maxaccel        [JOINT_1]STEPGEN_MAXACCEL
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.01.step_type       0
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.01.step.invert_output       [JOINT_1]STEP_INVERT
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.01.direction.invert_output  [JOINT_1]DIR_INVERT
+net y-enable  joint.1.amp-enable-out  => hm2_[HOSTMOT2](BOARD).0.stepgen.01.enable
+net y-pos-cmd joint.1.motor-pos-cmd   => hm2_[HOSTMOT2](BOARD).0.stepgen.01.position-cmd
+net y-pos-fb  hm2_[HOSTMOT2](BOARD).0.stepgen.01.position-fb => joint.1.motor-pos-fb
+
+# Z - joint 2
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.02.dirsetup        [JOINT_2]DIRSETUP
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.02.dirhold         [JOINT_2]DIRHOLD
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.02.steplen         [JOINT_2]STEPLEN
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.02.stepspace       [JOINT_2]STEPSPACE
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.02.position-scale  [JOINT_2]SCALE
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.02.maxvel          [JOINT_2]STEPGEN_MAXVEL
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.02.maxaccel        [JOINT_2]STEPGEN_MAXACCEL
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.02.step_type       0
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.02.step.invert_output       [JOINT_2]STEP_INVERT
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.02.direction.invert_output  [JOINT_2]DIR_INVERT
+net z-enable  joint.2.amp-enable-out  => hm2_[HOSTMOT2](BOARD).0.stepgen.02.enable
+net z-pos-cmd joint.2.motor-pos-cmd   => hm2_[HOSTMOT2](BOARD).0.stepgen.02.position-cmd
+net z-pos-fb  hm2_[HOSTMOT2](BOARD).0.stepgen.02.position-fb => joint.2.motor-pos-fb
+
+# A - joint 3
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.03.dirsetup        [JOINT_3]DIRSETUP
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.03.dirhold         [JOINT_3]DIRHOLD
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.03.steplen         [JOINT_3]STEPLEN
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.03.stepspace       [JOINT_3]STEPSPACE
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.03.position-scale  [JOINT_3]SCALE
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.03.maxvel          [JOINT_3]STEPGEN_MAXVEL
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.03.maxaccel        [JOINT_3]STEPGEN_MAXACCEL
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.03.step_type       0
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.03.step.invert_output       [JOINT_3]STEP_INVERT
+setp hm2_[HOSTMOT2](BOARD).0.stepgen.03.direction.invert_output  [JOINT_3]DIR_INVERT
+net a-enable  joint.3.amp-enable-out  => hm2_[HOSTMOT2](BOARD).0.stepgen.03.enable
+net a-pos-cmd joint.3.motor-pos-cmd   => hm2_[HOSTMOT2](BOARD).0.stepgen.03.position-cmd
+net a-pos-fb  hm2_[HOSTMOT2](BOARD).0.stepgen.03.position-fb => joint.3.motor-pos-fb
+
+# ---------------------------------------------------------------
+# Home/limit switches and probe (TB3, NPN style: INPUT COMMON = +24 V)
+# Mach3 profile: X, Y, Z each use ONE switch for home + both limits; probe separate.
+#   INPUT0 = X (yellow, old IN1)   INPUT1 = Y (red, old IN2)
+#   INPUT2 = Z (white, old IN3)    INPUT3 = probe (black, old IN4)
+# input-NN is TRUE while current flows (switch closed). If a pin reads TRUE with
+# nothing pressed (normally-closed switch), change that line to input-NN-not.
+# (confirm on first power-up: press each switch and watch the pin in Halshow)
+# ---------------------------------------------------------------
+net x-home-sw hm2_[HOSTMOT2](BOARD).0.inm.00.input-00 => joint.0.home-sw-in joint.0.neg-lim-sw-in joint.0.pos-lim-sw-in
+net y-home-sw hm2_[HOSTMOT2](BOARD).0.inm.00.input-01 => joint.1.home-sw-in joint.1.neg-lim-sw-in joint.1.pos-lim-sw-in
+net z-home-sw hm2_[HOSTMOT2](BOARD).0.inm.00.input-02 => joint.2.home-sw-in joint.2.neg-lim-sw-in joint.2.pos-lim-sw-in
+# Probe re-enabled 2026-10-12. The earlier INPUT3 flicker was the limit-switch common (black)
+# wrongly landed on TB3 pin 4. It now goes to 24 V V-, and the touch-plate wire goes on pin 4.
+# Two probe inputs; either one triggers G38 probing and the Probe Basic probe LED:
+#   INPUT3 (TB3 pin 4) = 10 mm touch plate lead (clip on the bit)
+#   INPUT4 (TB3 pin 5) = PGFUN TP05C 3D probe, NPN-NO, 2 mm ball:
+#     red = +24 V, black = 24 V supply V-, yellow (signal) = INPUT4.
+#     Its 10k pull-up goes to its own supply, so it must run on the same +24 V
+#     as INPUT COMMON. On 5 V the input would see ~19 V at rest and turn on.
+net probe-plate  hm2_[HOSTMOT2](BOARD).0.inm.00.input-03 => probe_or.in0
+net probe-3d     hm2_[HOSTMOT2](BOARD).0.inm.00.input-04 => probe_or.in1
+#   INPUT6 (TB3 pin 7) = tool setter "tool signal" contact, NC (LED on at rest, off when pressed), other side to 24 V V-.
+#     Its "stroke protect" NC overtravel contact is NOT wired yet (could go in series with the E-stop, or on INPUT7).
+net probe-plate-or-3d probe_or.out => probe_or2.in0
+net probe-toolsetter  hm2_[HOSTMOT2](BOARD).0.inm.00.input-06-not => probe_or2.in1
+net probe-in     probe_or2.out => motion.probe-input
+
+# ---------------------------------------------------------------
+# E-stop: the big red button on the control box cuts power to everything (incl. the Mesa) - a hard stop,
+# but LinuxCNC only sees it as a lost card (restart LinuxCNC + re-home after). INPUT4 is the 3D probe.
+# Planned (2026-10-18): a SECOND, separate NC latching E-stop button: TB3 pin 6 (INPUT5) <-> 24 V supply V-.
+# INPUT5 LED is lit normally and goes dark when pressed (a broken wire also = stop).
+# Tool setter "stroke protect" (NC overtravel) is not wired; simplest use = in series with this E-stop button.
+# ---------------------------------------------------------------
+# Wired 2026-10-19: NC E-stop on INPUT5 (TB3-6). TRUE = released/OK; pressed or broken wire = E-stop.
+net estop-ok hm2_[HOSTMOT2](BOARD).0.inm.00.input-05 => iocontrol.0.emc-enable-in
+
+# ---------------------------------------------------------------
+# Spindle: MK100 VFD over RS-485 Modbus RTU (2026-10-18)
+#   7I96S firmware 7i96s_pktv3.bin: PktUART on TB2-16..19 (16-18 and 17-19 jumpered) -> VFD 485-/485+, TB2-15 -> COM.
+#   Register map + VFD settings: modbus/mk100.mbccs (compile: mesambccc -o mk100.mbccb mk100.mbccs).
+#   VFD: P0-02=2, P0-03=9 (run + speed from Modbus), Pd-04=1.0 s (VFD stops itself if comms stop for 1 s;
+#   shows Err16 whenever LinuxCNC is closed - cleared automatically at startup by the mbccs initlist).
+#   The old analog/SSR plan (PWM 0 -> AI1, OUT4/OUT5 -> X1/X2) is no longer used.
+# ---------------------------------------------------------------
+# Speed: rpm -> VFD 1000H (10000 = 100 % of P0-10 = 400.0 Hz = 24000 rpm)
+setp hm2_modbus.0.vfd.speed.scale  0.41666667
+net spindle-speed-abs  spindle.0.speed-out-abs  => hm2_modbus.0.vfd.speed spindle_near.in1
+
+# Run command -> VFD 2000H: 6 = decelerate to stop (M5 / machine off), 1 = forward (M3), 2 = reverse (M4)
+setp spindle_cmd.in0 6
+setp spindle_cmd.in1 1
+setp spindle_cmd.in2 2
+setp spindle_cmd.in3 6
+net spindle-fwd      spindle.0.forward  => spindle_cmd.sel0
+net spindle-rev      spindle.0.reverse  => spindle_cmd.sel1
+net spindle-vfd-cmd  spindle_cmd.out    => hm2_modbus.0.vfd.cmd
+
+# Feedback: VFD 1001H running frequency (0.1 Hz units) x 6 = rpm; 1004H current x 0.01 = A
+setp hm2_modbus.0.vfd.freq.scale     6
+setp hm2_modbus.0.vfd.current.scale  0.01
+net spindle-rpm-actual  hm2_modbus.0.vfd.freq.scaled  => spindle_near.in2 spindle_rps.in
+setp spindle_rps.gain 0.016666667
+net spindle-rps-actual  spindle_rps.out  => spindle.0.speed-in
+
+# At speed: actual rpm within 2 % (or 100 rpm) of commanded - replaces the fixed 8 s SPINUP_DELAY
+setp spindle_near.scale       1.02
+setp spindle_near.difference  100
+net spindle-at-speed  spindle_near.out  => spindle.0.at-speed
+
+# Fault: any VFD fault code (8000H != 0) or lost Modbus comms -> spindle amp fault (LinuxCNC stops)
+setp vfd_fault_cmp.in0 0.5
+net vfd-fault-code   hm2_modbus.0.vfd.faultcode  => vfd_fault_f.in
+net vfd-fault-codef  vfd_fault_f.out             => vfd_fault_cmp.in1
+net vfd-faulted      vfd_fault_cmp.out           => spindle_fault_or.in0
+net vfd-comm-fault   hm2_modbus.0.fault          => spindle_fault_or.in1
+net spindle-fault    spindle_fault_or.out        => spindle.0.amp-fault-in
+
+# ---------------------------------------------------------------
+# Manual tool change (Probe Basic's dialog is connected in probe_basic_postgui.hal)
+# ---------------------------------------------------------------
+net tool-change-request    iocontrol.0.tool-change
+net tool-change-confirmed  iocontrol.0.tool-changed
+net tool-number            iocontrol.0.tool-prep-number
+net tool-prep-loopback     iocontrol.0.tool-prepare => iocontrol.0.tool-prepared
+
+# Probe Basic tool-length display (as in its sim config)
+net tlo motion.analog-in-01 <= halui.tool.length_offset.z

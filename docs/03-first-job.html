@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3. Your first job, start to finish</title><link rel="stylesheet" href="assets/style.css"></head>
+<body><header class="top"><a href="index.html">Probe Basic, Explained</a></header>
+<main><h1>3. Your first job, start to finish</h1>
+<p>This is the complete sequence for a CAM program with several tools, a part held on the table, a 3D probe and a tool setter. It is the routine used for every job on the reference machine.</p>
+<h2>1. Power up and home</h2>
+<ol>
+<li>Switch on the control box (stepper drivers, VFD, Mesa card), then start LinuxCNC.</li>
+<li>Release the E-stop and press <strong>POWER</strong>.</li>
+<li>Press <strong>REF ALL</strong>. Each axis homes in turn; Z goes first on most routers so the spindle lifts clear. The button then reads <strong>HOMED</strong>.</li>
+</ol>
+<p>You must home after every LinuxCNC start. Work offsets and tool lengths are kept, but LinuxCNC can't know where the axes are until they find their switches.</p>
+<h2>2. Load the program</h2>
+<p><strong>FILE</strong> tab → select the file → <strong>LOAD G-CODE</strong>. Then check the preview on the MAIN tab:</p>
+<ul>
+<li>The whole toolpath should draw. If you only see a few lines, the preview stopped at an error; check STATUS. (A subroutine that probes during the program can cause this. See chapter 11.)</li>
+<li><strong>PGM EXT</strong> zooms to the program. Check it is roughly where you expect relative to the part.</li>
+</ul>
+<h2>3. Load the probe</h2>
+<p>Put the 3D probe in the spindle. In the <strong>T</strong> box at the bottom type the probe's tool number (often <strong>99</strong>), then press <strong>M6 G43</strong>.</p>
+<ul>
+<li><strong>M6</strong> tells LinuxCNC that tool is now in the spindle. On a manual-change machine it lifts Z and asks you to insert it; just confirm.</li>
+<li><strong>G43</strong> applies the probe's measured length, so Z now refers to the ball tip.</li>
+</ul>
+<p>Check: the T box shows 99, the <strong>G43</strong> button is lit, and <strong>LENGTH</strong> shows the probe's length. Tap the stylus; the probe LED on screen should light. A normally-open probe that is unplugged never triggers, so always test it.</p>
+<h2>4. Find the part with the probe</h2>
+<p>Go to <strong>PROBING → TOUCH PROBE</strong>.</p>
+<ol>
+<li>Turn <strong>PROBE POSITION ONLY</strong> <strong>off</strong>. While it is on, routines only measure and report. While it is off, they write the result into the active work offset, which is what you want now.</li>
+<li>Pick the routine that matches the part. For a rectangular block or board whose center is your zero: <strong>BOSS AND POCKET → RECT BOSS</strong> (bottom row, middle).</li>
+<li>Enter the part's approximate size in <strong>X HINT</strong> and <strong>Y HINT</strong>. The routine steps out by half the hint plus the step-off width before it drops down beside the part.</li>
+<li>Jog the probe over the middle of the part, within a few millimetres of center, with the ball 3–8 mm above the top. That must be within MAX Z DISTANCE.</li>
+<li>Press the routine button. The probe touches the top (Z0), then both X sides and both Y sides, and returns over the center.</li>
+<li>Read <strong>PROBE RESULTS</strong>: X WIDTH and Y WIDTH should match the part. The DRO should now read about X0 Y0, and Z = the Z CLEARANCE.</li>
+<li>Turn <strong>PROBE POSITION ONLY</strong> back <strong>on</strong>, so a later measurement can't move your zero by accident.</li>
+</ol>
+<p><img alt="RECT BOSS probing sequence" src="diagrams/rect-boss.svg" /></p>
+<p>For a corner zero instead, use <strong>OUTSIDE CORNERS</strong> and pick the corner. Chapter 5 covers every routine.</p>
+<h2>5. Check Z before cutting (30 seconds, worth it)</h2>
+<p>With the probe still loaded and G43 on, the DRO Z shows the ball's height above the part. Hold a ruler to the gap. If the DRO says 55 and the gap is 55 mm, the zero is right. If the gap is about one probe-length different, G43 wasn't active during probing: redo step 3, then step 4.</p>
+<h2>6. Run</h2>
+<ol>
+<li>Take the probe out.</li>
+<li>Turn the <strong>F</strong> (feed override) slider down to 25–50 % for the start.</li>
+<li>Press <strong>CYCLE START</strong>.</li>
+<li>At the first <code>T1 M6</code> the machine lifts Z and asks for tool 1. Insert it and confirm.
+   - <strong>With the M6 remap</strong> (chapter 6): it drives to the tool setter, measures the tool and continues. Nothing else to do.
+   - <strong>Without the remap</strong>: the program uses whatever length is in the tool table, so you must have measured the tool beforehand with TOUCH OFF CURRENT TOOL.</li>
+<li>Watch the first plunge. The tip should land where the program says, for example just below the top surface for a facing pass. If anything looks wrong, press <strong>FEED HOLD</strong>.</li>
+<li>Once it looks right, bring the feed override back to 100 %.</li>
+</ol>
+<h2>7. Tool changes and pauses</h2>
+<ul>
+<li><strong>Every <code>M6</code></strong>: lift, prompt, insert, confirm, measure (with the remap), continue.</li>
+<li><strong><code>M1</code></strong> (optional stop): the program pauses only if <strong>M01 BREAK</strong> is lit. Press CYCLE START to continue.</li>
+<li><strong>Pausing</strong>: <strong>FEED HOLD</strong>, then <strong>CYCLE START</strong> to resume. The spindle keeps turning during a hold, so keep hands and the vacuum nozzle away from the cutter. In metal, keep holds short: a spinning tool that is not moving rubs and heats up.</li>
+</ul>
+<h2>8. When it finishes</h2>
+<p>The program ends with <code>M30</code>: spindle off, offsets kept. The work offset stays valid as long as the part doesn't move, so you can re-run, or run a second program on the same part, without probing again.</p>
+<blockquote>
+<p><strong>On the 6040.</strong> The first job on this machine was an aluminum isogrid plate, test-cut first in plywood. It used three tools: a 6 mm single-flute for facing and roughing, a 1/8" single-flute O-flute for corners, walls, holes and the profile, and a 90° chamfer mill. G54 came from RECT BOSS on the stock, and every tool was measured on the setter at its M6.</p>
+</blockquote><nav class="pager"><span><a href="02-screen-tour.html">← 2. A tour of the screen</a></span><span><a href="04-work-offsets.html">4. The OFFSETS tab →</a></span></nav></main></body></html>

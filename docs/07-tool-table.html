@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>7. The tool table</title><link rel="stylesheet" href="assets/style.css"></head>
+<body><header class="top"><a href="index.html">Probe Basic, Explained</a></header>
+<main><h1>7. The tool table</h1>
+<h2>Where it lives</h2>
+<p>Probe Basic 1.0.x can keep the tool table in an <strong>SQLite database</strong> instead of LinuxCNC's classic <code>tool.tbl</code> text file. The INI selects it:</p>
+<pre><code>[EMCIO]
+DB_PROGRAM = ./tool_db.sh
+TOOL_DB_FILE = 6040_tools.db
+</code></pre>
+<p><code>tool_db.sh</code> starts QtPyVCP's <code>tool_db_backend</code>, which answers LinuxCNC's tool queries from the database. The TOOL tab edits the same file. One database is the single source of truth: diameter, length, remark and the ATC flag.</p>
+<h2>Columns</h2>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T</td>
+<td>Tool number: what <code>T5</code> and <code>H5</code> refer to.</td>
+</tr>
+<tr>
+<td>P</td>
+<td>Pocket. Only matters for an ATC.</td>
+</tr>
+<tr>
+<td>Z</td>
+<td>Tool length (from the setter).</td>
+</tr>
+<tr>
+<td>D</td>
+<td>Diameter: used by cutter compensation and the preview, and by the probe routines for the ball.</td>
+</tr>
+<tr>
+<td>ATC</td>
+<td>Whether the tool fits the automatic changer's carousel. Unused without an ATC.</td>
+</tr>
+<tr>
+<td>Remark</td>
+<td>Free text: maker, flute count, stick-out, collet.</td>
+</tr>
+</tbody>
+</table>
+<p>Edit cells, then <strong>SAVE TABLE</strong>. <strong>ADD TOOL</strong> and <strong>DELETE</strong> manage rows. <strong>UPDATE LOADED TOOL</strong> pushes edits for the tool in the spindle.</p>
+<h2>Numbering advice</h2>
+<ul>
+<li><strong>Use the same numbers as your CAM library.</strong> If Fusion's library has your 1/8" O-flute as tool 12, make it T12 here too. Then posted programs need no renumbering.</li>
+<li><strong>Reserve a high number for the probe</strong> (99 is conventional), so a program can never call it by accident.</li>
+<li><strong>Put stick-out and collet in the remark</strong>, so the next time you load the tool you set the same length.</li>
+</ul>
+<h2>If LinuxCNC says "tool not found in tool table"</h2>
+<p>The database file is probably fine, but LinuxCNC's in-memory copy isn't. A restart of LinuxCNC reloads it. On the reference machine this happened because a tool process from an earlier LinuxCNC session was still running alongside the new one. Chapter 11 has the full story and the fix.</p><nav class="pager"><span><a href="06-tool-setter.html">← 6. The tool setter, and measuring every tool automatically</a></span><span><a href="08-running-programs.html">8. Running programs →</a></span></nav></main></body></html>

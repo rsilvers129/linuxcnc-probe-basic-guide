@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>8. Running programs</title><link rel="stylesheet" href="assets/style.css"></head>
+<body><header class="top"><a href="index.html">Probe Basic, Explained</a></header>
+<main><h1>8. Running programs</h1>
+<h2>Starting</h2>
+<p><strong>CYCLE START</strong> runs the loaded program. If it does nothing and the button doesn't highlight when you hover over it, the GUI considers the machine not ready. Check:</p>
+<ul>
+<li>the machine is on and homed (REF ALL shows <strong>HOMED</strong>),</li>
+<li>a program is loaded,</li>
+<li>nothing else (MDI, a probing routine) is still running.</li>
+</ul>
+<p>Toggling <strong>POWER</strong> off and on forces Probe Basic to re-check its state. That cleared a stuck CYCLE START on the reference machine after modes had been changed from outside the GUI.</p>
+<h2>Watching the first moves</h2>
+<ul>
+<li><strong>F slider at 25–50 %</strong> for the first plunge of any new program. Every feed move is scaled; rapids are not.</li>
+<li><strong>SINGLE BLOCK</strong> to step line by line through the start.</li>
+<li><strong>Dry run in the air.</strong> Temporarily raise G54 Z (for example 20 mm higher) and run the start of the program above the part. Put it back afterwards.</li>
+<li><strong>Test in scrap.</strong> Run the program once in wood or plastic before the expensive stock, as the reference machine did with plywood before aluminum.</li>
+</ul>
+<h2>Pausing and resuming</h2>
+<table>
+<thead>
+<tr>
+<th>You want to…</th>
+<th>Do this</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pause briefly (chips, check something)</td>
+<td><strong>FEED HOLD</strong>, then <strong>CYCLE START</strong>. Your place is kept. The spindle keeps running.</td>
+</tr>
+<tr>
+<td>Pause at a planned point</td>
+<td>Put <code>M1</code> in the program and light <strong>M01 BREAK</strong>, or use <code>M0</code> (always stops).</td>
+</tr>
+<tr>
+<td>Stop the spindle mid-job</td>
+<td>FEED HOLD, then STOP. Note the line number, and later use <strong>RUN FROM LINE</strong> at the start of an operation.</td>
+</tr>
+<tr>
+<td>Emergency</td>
+<td>E-stop. Everything stops; you will need to re-enable, and usually re-home.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>RUN FROM LINE</strong> starts partway through, but it doesn't replay what came before: position, tool, tool length, work offset, spindle and coolant. Start at a line where the program sets all of them itself. In Fusion output, that's the comment line that begins an operation, right before its <code>T… M6</code>.</p>
+<h2>Overrides during the job</h2>
+<ul>
+<li><strong>Feed</strong>: 100 % is what the CAM asked for. In soft materials it is usually safe to go above 100 % once you have heard the cut. In metal, raise it slowly and listen.</li>
+<li><strong>Spindle</strong>: adjusts rpm live. On a VFD controlled over Modbus the change is immediate.</li>
+<li><strong>Rapid</strong>: turn it down when a program has long rapids near clamps you are unsure of.</li>
+</ul>
+<h2>Dry cutting aluminum (no coolant)</h2>
+<p>Without coolant, the risk is chips being re-cut and welding to the flute, which snaps small cutters. On the reference machine:</p>
+<ul>
+<li><strong>Single-flute cutters</strong> (O-flute or 1F upcut): a deep flute, and the biggest possible chip per tooth.</li>
+<li><strong>Feed high enough to make real chips</strong>: about 0.05–0.1 mm per tooth programmed. Thin chips rub and heat the tool.</li>
+<li><strong>Adaptive (trochoidal) roughing</strong>: light radial engagement, full flute engagement in depth.</li>
+<li><strong>Air blast or vacuum at the cutter</strong> for the whole run. That matters more than any feed setting.</li>
+</ul><nav class="pager"><span><a href="07-tool-table.html">← 7. The tool table</a></span><span><a href="09-conversational.html">9. Conversational programming →</a></span></nav></main></body></html>

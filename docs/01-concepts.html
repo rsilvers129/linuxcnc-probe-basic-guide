@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1. The two ideas everything rests on</title><link rel="stylesheet" href="assets/style.css"></head>
+<body><header class="top"><a href="index.html">Probe Basic, Explained</a></header>
+<main><h1>1. The two ideas everything rests on</h1>
+<p>Almost every confusing moment in Probe Basic comes back to two questions:</p>
+<ol>
+<li><strong>Where is the part?</strong> That is answered by the <em>work offset</em>.</li>
+<li><strong>Where is the tip of the cutter?</strong> That is answered by the <em>tool length offset</em>.</li>
+</ol>
+<p>Once both are right, a program that says "go to X0 Y0 Z−0.3" puts the tip of whatever cutter is loaded exactly 0.3 mm below the top of your part, at the point the program calls zero.</p>
+<h2>Machine coordinates</h2>
+<p>When you press <strong>REF ALL</strong> (home), each axis drives to its switch and LinuxCNC sets <strong>machine coordinates</strong>. They are fixed to the frame of the machine and never change until the next homing. On most routers machine Z0 is the <em>top</em> of Z travel, so every Z position below it is negative.</p>
+<p>Machine coordinates are what the soft limits use. They are also what tool-change positions, the tool setter position and other "fixed places on the table" are stored in.</p>
+<h2>Work coordinates and the work offset (G54)</h2>
+<p>Your CAM program is not written in machine coordinates. It is written relative to the part: typically X0 Y0 at a corner or the center, and Z0 on the top surface. The <strong>work offset</strong> connects the two. It is simply the position of the part's zero point, expressed in machine coordinates.</p>
+<p><img alt="Machine coordinates and the G54 work offset" src="diagrams/coordinates.svg" /></p>
+<p>LinuxCNC has nine work offsets: <strong>G54, G55, G56, G57, G58, G59, G59.1, G59.2 and G59.3</strong>. Each is a separate stored zero, so you can keep several fixtures or vises set up at once and pick one per job. Most people only ever use G54, which is also the default selected at startup.</p>
+<p>You can set a work offset three ways:</p>
+<ul>
+<li><strong>With the probe</strong> (the best way). A probing routine finds the part's edges or center and writes the result into the active offset. See chapter 5.</li>
+<li><strong>By touching off</strong>: jog to a known point and press <strong>ZERO X / ZERO Y / ZERO Z</strong> (or use the touch plate for Z).</li>
+<li><strong>By typing</strong>: <code>G10 L2 P1 X… Y… Z…</code> writes G54 directly in machine coordinates. <code>G10 L20 P1 X0</code> means "make <em>where I am now</em> X0 in G54".</li>
+</ul>
+<p>Work offsets are saved in the parameter file (the <code>.var</code> file), so they survive a restart. After a restart you only need to home again.</p>
+<blockquote>
+<p><strong>On the 6040.</strong> The isogrid test job used G54 = X 191.174, Y 271.276, Z −102.427. That is the center and top of a piece of plywood, found with the 3D probe's RECT BOSS routine.</p>
+</blockquote>
+<h2>Tool length offsets (G43)</h2>
+<p>LinuxCNC needs to know how far each cutter's tip sits below a fixed reference point on the spindle. On most hobby machines that reference is the <strong>face of the collet nut</strong> (sometimes called the spindle nose). The distance from that face down to the tip is the tool's <strong>length</strong>, stored in the <strong>tool table</strong>.</p>
+<p><img alt="Tool length offset" src="diagrams/tool-length.svg" /></p>
+<p><strong>G43 Hn</strong> tells LinuxCNC "the tool in the spindle is tool <em>n</em>; apply its length". From then on, Z positions and the Z readout refer to the tip of that tool. <strong>G49</strong> cancels it, and Z refers to the nut face again.</p>
+<p>This is why a program can change from a 6 mm end mill to a 1/8" end mill and keep cutting at the right depth. Each tool's length is different, but G43 corrects for it.</p>
+<p>Tool lengths are measured with a <strong>tool setter</strong>, a switch fixed to the table that the cutter is lowered onto. See chapter 6.</p>
+<h2>Why both matter: the shared reference</h2>
+<p>The tool setter, the touch plate and the 3D probe all agree because they all use the same reference: the nut face.</p>
+<ul>
+<li>The setter measures each tool's length from the nut face.</li>
+<li>The probe is just another "tool" in the table (often T99), with its own measured length.</li>
+<li>When the probe touches the top of the part, LinuxCNC knows where the <em>ball tip</em> is (because G43 is active for T99). It stores the part's top as G54 Z0.</li>
+<li>When the program later loads T1 and applies G43 H1, "Z0" puts T1's tip on that same surface.</li>
+</ul>
+<blockquote>
+<p><strong>The most common mistake.</strong> Probing with the probe in the spindle but <strong>without G43 active</strong> for it. LinuxCNC then thinks the nut face touched the part, and Z0 ends up one probe-length too high. On the 6040 that was 46.87 mm, so the program cut air. The fix is to always load the probe with <strong>M6 G43</strong> (chapter 5).</p>
+</blockquote>
+<h2>Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Answer</th>
+<th>Set by</th>
+<th>Stored in</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Where is the machine?</td>
+<td>Machine coordinates</td>
+<td>REF ALL (homing)</td>
+<td>Re-found at every homing</td>
+</tr>
+<tr>
+<td>Where is the part?</td>
+<td>Work offset (G54…)</td>
+<td>Probing, ZERO buttons, G10 L2/L20</td>
+<td>Parameter file (<code>.var</code>)</td>
+</tr>
+<tr>
+<td>Where is the cutter tip?</td>
+<td>Tool length (G43 Hn)</td>
+<td>Tool setter, TOUCH OFF</td>
+<td>Tool table</td>
+</tr>
+</tbody>
+</table><nav class="pager"><span><a href="00-preface.html">← Probe Basic, Explained</a></span><span><a href="02-screen-tour.html">2. A tour of the screen →</a></span></nav></main></body></html>

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>10. From CAM to Probe Basic (Fusion 360)</title><link rel="stylesheet" href="assets/style.css"></head>
+<body><header class="top"><a href="index.html">Probe Basic, Explained</a></header>
+<main><h1>10. From CAM to Probe Basic (Fusion 360)</h1>
+<p>Any CAM that posts LinuxCNC G-code works. This chapter uses Fusion 360, as on the reference machine.</p>
+<h2>The post processor</h2>
+<p>Use Fusion's stock <strong>LinuxCNC</strong> post (<code>linuxcnc.cps</code>). It writes <code>.ngc</code> files with <code>G54</code>, <code>T# M6</code>, <code>G43 H#</code>, <code>S… M3</code> and the arcs LinuxCNC expects. Mach3 posts mostly work too, but they add Mach-isms and sometimes <code>.tap</code> extensions. The LinuxCNC post is cleaner.</p>
+<h2>Settings that matter</h2>
+<h3>"Manual tool change" in the tool library</h3>
+<p>Fusion tools have a <strong>Manual tool change</strong> checkbox. When it is ticked, the LinuxCNC post writes:</p>
+<pre><code>M0
+(MANUAL TOOL CHANGE TO T12)
+</code></pre>
+<p>That's a plain stop, <strong>not</strong> <code>T12 M6</code>. LinuxCNC then never learns which tool is loaded, an M6 remap never runs, and <code>G43 H12</code> uses whatever length is in the table. <strong>Untick it for every tool</strong>, so the post writes <code>T12 M6</code>. That gives a real tool change, measured by the M6 remap (chapter 6).</p>
+<h3>Tool numbers</h3>
+<p>Make Fusion's tool numbers match the Probe Basic tool table (chapter 7). The post's <code>T12 M6</code> and <code>G43 H12</code> then just work.</p>
+<h3>Work coordinate system and origin</h3>
+<p>In the Fusion setup, set <strong>WCS offset = 1</strong> (G54). Put the origin where you will probe it: for example the <strong>top center of the stock</strong>, matching a RECT BOSS on the stock. The stock top is Z0 if you probe the top; if you will face the stock, add the facing allowance in the setup's stock offsets.</p>
+<h3>Coolant</h3>
+<p>If the machine has no coolant outputs, set coolant to <em>Disabled</em> in the operations, so no <code>M7</code>/<code>M8</code> is posted.</p>
+<h2>Two Fusion gotchas found the hard way</h2>
+<ol>
+<li><strong>2D Contour on pocket floors cuts on the wrong side.</strong> A face-contour selection defaults to side type "Start outside". On pocket floor faces, that put the tool <em>outside</em> every pocket outline, through all the ribs. In the API, set <code>sideType = AlwaysInsideSideType</code>. In the UI, check the red arrow on every contour, and check the simulation.</li>
+<li><strong>Contours on a face with holes trace the holes too.</strong> An outside profile selected from the part's bottom face also tried to cut around each through-hole. Restrict it to the outer loop (<code>loopType = OnlyOutsideLoops</code>).</li>
+</ol>
+<p>Both were caught by checking the posted G-code against the model before cutting: a small script steps through every move and measures the cutter's clearance to the part. Simulate in Fusion at the very least.</p>
+<h2>Checking a program before it runs</h2>
+<ul>
+<li><strong>Preview in Probe Basic</strong>: the whole path should draw, and <strong>PGM EXT</strong> should frame what you expect.</li>
+<li><strong>Deepest Z</strong>: search the file for the most negative Z. It should be the deepest feature, or a through cut slightly into the spoilboard or tape, never more.</li>
+<li><strong>Tool calls</strong>: every <code>T# M6</code> should be followed by <code>G43 H#</code> with the same number.</li>
+<li><strong>First moves</strong>: run with the feed override low, or in the air.</li>
+</ul><nav class="pager"><span><a href="09-conversational.html">← 9. Conversational programming</a></span><span><a href="11-troubleshooting.html">11. Troubleshooting (every one of these happened) →</a></span></nav></main></body></html>

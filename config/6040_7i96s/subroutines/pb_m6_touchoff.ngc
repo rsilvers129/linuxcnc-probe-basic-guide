@@ -1,0 +1,20 @@
+(Remapped M6 for the 6040 router: manual tool change, then measure the new tool on the tool setter)
+(Enabled by RS274NGC REMAP=M6 modalgroup=6 prolog=change_prolog ngc=pb_m6_touchoff epilog=change_epilog)
+(Inside this subroutine M6 is the LinuxCNC built-in manual tool change.)
+(No measurement for T0 = empty spindle, for the probe tool number in #3014 = T99, or in the preview.)
+
+o<pb_m6_touchoff> sub
+
+M5                          (spindle off before anything moves to the setter)
+M6                          (built-in manual change: Z up, insert-tool prompt)
+M66 E0 L0                   (stop read-ahead so the new tool is current)
+
+o100 if [#<_task> EQ 1]
+  o110 if [[#<selected_tool> GT 0] AND [#<selected_tool> NE #3014]]
+    o<tool_touch_off> call  (Probe Basic setter routine: measures, stores the length, applies G43)
+  o110 endif
+o100 endif
+
+o<pb_m6_touchoff> endsub [1]
+
+M2

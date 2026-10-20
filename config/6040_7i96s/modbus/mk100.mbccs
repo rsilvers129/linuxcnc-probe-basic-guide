@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- MK100-1S2.2G-DK spindle VFD over RS-485 Modbus RTU (7I96S PktUART on TB2-16..19).
+     VFD settings: P0-02=2 (run from comms), P0-03=9 (freq from comms), Pd-00=5005 (9600), Pd-01=0 (8N2),
+     Pd-02=1 (address), Pd-05=31 (standard Modbus), Pd-04=1.0 s comms timeout.
+     The MK100 answers only ONE register per read (manual 13.3), so every read is count 1.
+     Registers (manual 13.4): 2000H command 1=fwd 2=rev 6=decel stop 7=fault reset;
+       1000H speed -10000..10000 = % of P0-10 (400.0 Hz = 24000 rpm) x100;
+       1001H running frequency (0.1 Hz); 1004H output current (0.01 A); 3000H state 1 fwd 2 rev 3 stop; 8000H fault code. -->
+<mesamodbus baudrate="9600" parity="N" stopbits="2" duplex="half">
+  <devices>
+    <device address="1" name="vfd"><description>MK100 spindle VFD</description></device>
+  </devices>
+  <initlist>
+    <command device="vfd" function="W_REGISTER" address="0x2000"><data value="7" /><description>Fault reset at start (clears a comms-timeout fault left from when LinuxCNC was closed)</description></command>
+  </initlist>
+  <commands>
+    <command device="vfd" function="W_REGISTER" address="0x2000" haltype="HAL_FLOAT" modbustype="U_AB" scale="0" resend="1">
+      <pin name="cmd" /><description>1 = forward, 2 = reverse, 6 = decelerate to stop</description>
+    </command>
+    <command device="vfd" function="W_REGISTER" address="0x1000" haltype="HAL_FLOAT" modbustype="S_AB" scale="1" resend="1">
+      <pin name="speed" /><description>rpm in; speed.scale = 10000/24000 converts to the VFD percent x100 value</description>
+    </command>
+    <command device="vfd" function="R_REGISTERS" address="0x1001" count="1" haltype="HAL_FLOAT" modbustype="S_AB" scale="1">
+      <pin name="freq" /><description>running frequency in 0.1 Hz; freq.scale = 6 gives rpm on freq.scaled</description>
+    </command>
+    <command device="vfd" function="R_REGISTERS" address="0x1004" count="1" haltype="HAL_FLOAT" modbustype="U_AB" scale="1">
+      <pin name="current" /><description>output current; current.scale = 0.01 gives amps</description>
+    </command>
+    <command device="vfd" function="R_REGISTERS" address="0x3000" count="1" haltype="HAL_U32" modbustype="U_AB">
+      <pin name="state" /><description>1 = running forward, 2 = running reverse, 3 = stopped</description>
+    </command>
+    <command device="vfd" function="R_REGISTERS" address="0x8000" count="1" haltype="HAL_U32" modbustype="U_AB">
+      <pin name="faultcode" /><description>VFD fault code, 0 = no fault</description>
+    </command>
+  </commands>
+</mesamodbus>

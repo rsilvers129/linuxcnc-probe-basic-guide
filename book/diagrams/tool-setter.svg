@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 440" font-family="Helvetica, Arial, sans-serif" font-size="15">
+  <title>How the tool setter measures tool length</title>
+  <rect width="760" height="440" fill="#ffffff"/>
+  <defs>
+    <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#333"/>
+    </marker>
+  </defs>
+  <!-- Z home line -->
+  <line x1="40" y1="60" x2="720" y2="60" stroke="#888" stroke-dasharray="4 4"/>
+  <text x="520" y="52">machine Z0 (Z homed, full up)</text>
+  <!-- left: bare spindle -->
+  <text x="70" y="30" font-weight="bold">Calibration (once)</text>
+  <rect x="90" y="60" width="70" height="200" fill="#c9cdd3" stroke="#555"/>
+  <polygon points="96,260 154,260 146,285 104,285" fill="#9aa1aa" stroke="#555"/>
+  <rect x="85" y="285" width="80" height="18" fill="#3a8f4a"/>
+  <text x="70" y="325" fill="#3a8f4a">setter trigger</text>
+  <line x1="200" y1="62" x2="200" y2="283" stroke="#333" stroke-width="2" marker-start="url(#a4)" marker-end="url(#a4)"/>
+  <text x="210" y="170" font-weight="bold">SPINDLE ZERO</text>
+  <text x="210" y="190">(#3010) = distance from Z0</text>
+  <text x="210" y="208">down to the trigger point,</text>
+  <text x="210" y="226">measured with the bare nut</text>
+  <!-- right: with tool -->
+  <text x="440" y="30" font-weight="bold">Every tool</text>
+  <rect x="470" y="60" width="70" height="120" fill="#c9cdd3" stroke="#555"/>
+  <polygon points="476,180 534,180 526,205 484,205" fill="#9aa1aa" stroke="#555"/>
+  <rect x="498" y="205" width="14" height="78" fill="#6b4fb3"/>
+  <rect x="465" y="285" width="80" height="18" fill="#3a8f4a"/>
+  <line x1="580" y1="62" x2="580" y2="203" stroke="#333" stroke-width="2" marker-start="url(#a4)" marker-end="url(#a4)"/>
+  <text x="590" y="130">probed distance</text>
+  <line x1="580" y1="207" x2="580" y2="283" stroke="#6b4fb3" stroke-width="2" marker-start="url(#a4)" marker-end="url(#a4)"/>
+  <text x="590" y="250" fill="#6b4fb3" font-weight="bold">tool length</text>
+  <text x="40" y="370" font-size="16">tool length = SPINDLE ZERO − distance the nut travelled before the tool tip triggered</text>
+  <text x="40" y="398" font-size="14">Probe Basic's tool_touch_off.ngc does this, stores it with G10 L1, and applies G43 for that tool.</text>
+  <text x="40" y="420" font-size="14">Every tool, the touch plate and the 3D probe then share one reference: the collet nut face.</text>
+</svg>

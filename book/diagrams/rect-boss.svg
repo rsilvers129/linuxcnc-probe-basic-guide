@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 420" font-family="Helvetica, Arial, sans-serif" font-size="15">
+  <title>RECT BOSS probing sequence</title>
+  <rect width="760" height="420" fill="#ffffff"/>
+  <defs>
+    <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#d1601f"/>
+    </marker>
+  </defs>
+  <text x="20" y="28" font-weight="bold">Top view - RECT BOSS (Probing > BOSS AND POCKET, bottom row, middle)</text>
+  <!-- part -->
+  <rect x="160" y="110" width="440" height="180" fill="#e3d2b0" stroke="#8a6d3b" stroke-width="2"/>
+  <text x="170" y="132" fill="#5c4520">part (X HINT wide, Y HINT deep)</text>
+  <!-- start -->
+  <circle cx="380" cy="200" r="9" fill="#1f6fd1"/>
+  <text x="300" y="236" fill="#1f6fd1" font-weight="bold">1 start: centered, 3-8 mm above</text>
+  <text x="300" y="254" fill="#1f6fd1">touch the top = Z</text>
+  <!-- X touches -->
+  <circle cx="120" cy="200" r="7" fill="none" stroke="#d1601f" stroke-width="2"/>
+  <line x1="128" y1="200" x2="157" y2="200" stroke="#d1601f" stroke-width="2.5" marker-end="url(#a3)"/>
+  <text x="40" y="240" fill="#d1601f">2 step off, drop,</text><text x="40" y="258" fill="#d1601f">touch X- side</text>
+  <circle cx="640" cy="200" r="7" fill="none" stroke="#d1601f" stroke-width="2"/>
+  <line x1="632" y1="200" x2="603" y2="200" stroke="#d1601f" stroke-width="2.5" marker-end="url(#a3)"/>
+  <text x="615" y="240" fill="#d1601f">3 touch X+ side</text>
+  <!-- Y touches -->
+  <circle cx="380" cy="70" r="7" fill="none" stroke="#d1601f" stroke-width="2"/>
+  <line x1="380" y1="78" x2="380" y2="107" stroke="#d1601f" stroke-width="2.5" marker-end="url(#a3)"/>
+  <text x="392" y="70" fill="#d1601f">5 touch Y+ side (back)</text>
+  <circle cx="380" cy="330" r="7" fill="none" stroke="#d1601f" stroke-width="2"/>
+  <line x1="380" y1="322" x2="380" y2="293" stroke="#d1601f" stroke-width="2.5" marker-end="url(#a3)"/>
+  <text x="392" y="336" fill="#d1601f">4 touch Y- side (front)</text>
+  <text x="20" y="378">Center X = midpoint of the two X touches, center Y = midpoint of the two Y touches.</text>
+  <text x="20" y="400">Ball size and axis backlash cancel in the midpoint. With PROBE POSITION ONLY off,</text>
+  <text x="20" y="418">the result is written into the active work offset (G54): X0 Y0 at the center, Z0 on top.</text>
+</svg>

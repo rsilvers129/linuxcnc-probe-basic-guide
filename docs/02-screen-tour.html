@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2. A tour of the screen</title><link rel="stylesheet" href="assets/style.css"></head>
+<body><header class="top"><a href="index.html">Probe Basic, Explained</a></header>
+<main><h1>2. A tour of the screen</h1>
+<p>Probe Basic's window has two parts:</p>
+<ul>
+<li><strong>The top area</strong> changes with the tab you pick: MAIN, FILE, TOOL, OFFSETS, PROBING, CONVERSATIONAL, SETTINGS and STATUS. ATC and USER tabs appear when they are enabled.</li>
+<li><strong>The control strip along the bottom</strong> never changes. It holds everything you need while a program runs.</li>
+</ul>
+<h2>The bottom control strip</h2>
+<p>Learn this strip first; it is where you spend most of your time.</p>
+<h3>Program control (left)</h3>
+<table>
+<thead>
+<tr>
+<th>Button</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CYCLE START</strong></td>
+<td>Runs the loaded program, or resumes after FEED HOLD. It is greyed out until the machine is on, homed, idle and has a program loaded.</td>
+</tr>
+<tr>
+<td><strong>STOP</strong></td>
+<td>Aborts the program. You lose your place; restarting mid-program needs RUN FROM LINE.</td>
+</tr>
+<tr>
+<td><strong>FEED HOLD</strong></td>
+<td>Freezes motion immediately and keeps your place. The <strong>spindle keeps running.</strong> Press CYCLE START to continue.</td>
+</tr>
+<tr>
+<td><strong>SINGLE BLOCK</strong></td>
+<td>When lit, each CYCLE START runs one line. Good for stepping through the start of a new program.</td>
+</tr>
+<tr>
+<td><strong>BLOCK DELETE</strong></td>
+<td>When lit, lines that start with <code>/</code> are skipped.</td>
+</tr>
+<tr>
+<td><strong>M01 BREAK</strong></td>
+<td>When lit, the program stops at every <code>M1</code> (optional stop). Fusion 360 often puts an <code>M1</code> before tool changes.</td>
+</tr>
+<tr>
+<td><strong>POWER</strong></td>
+<td>Machine on/off (after the E-stop is released).</td>
+</tr>
+<tr>
+<td><strong>E-STOP</strong></td>
+<td>Software E-stop toggle. Your physical E-stop button is separate and always wins.</td>
+</tr>
+<tr>
+<td>Timer</td>
+<td>Running time of the current program.</td>
+</tr>
+</tbody>
+</table>
+<h3>Tool panel</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>T</strong> box + <strong>M6 G43</strong></td>
+<td>Type a tool number and press it: tool change to that tool, then apply its length. Use it for the probe (T99) and for manual tool loads.</td>
+</tr>
+<tr>
+<td><strong>G43 / G49</strong></td>
+<td>Turn the tool length offset on or off. The lit one is active.</td>
+</tr>
+<tr>
+<td><strong>LENGTH / DIAM</strong></td>
+<td>Length and diameter of the tool in the spindle, from the tool table.</td>
+</tr>
+<tr>
+<td><strong>GO TO ZERO</strong></td>
+<td>Moves to the work zero: Z up first, then X0 Y0.</td>
+</tr>
+<tr>
+<td><strong>GO TO G30</strong></td>
+<td>Moves to the stored G30 position. Probe Basic uses it as the tool-setter position.</td>
+</tr>
+<tr>
+<td><strong>GO TO HOME</strong></td>
+<td>Moves to machine home.</td>
+</tr>
+</tbody>
+</table>
+<h3>Position readout (DRO)</h3>
+<p>One row per axis:</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ZERO X / Y / Z / A</strong></td>
+<td>Makes the current position zero in the active work offset. It <strong>moves your work zero</strong>, so don't press it by accident.</td>
+</tr>
+<tr>
+<td><strong>G54 WORK</strong></td>
+<td>Position relative to the part. That is the tool tip, if G43 is on.</td>
+</tr>
+<tr>
+<td><strong>MACHINE</strong></td>
+<td>Absolute machine position.</td>
+</tr>
+<tr>
+<td><strong>DTG</strong></td>
+<td>Distance to go in the current move.</td>
+</tr>
+<tr>
+<td><strong>REF X / Y / Z / A</strong></td>
+<td>Homes that axis. <strong>REF ALL</strong> homes everything; when done, the button reads <strong>HOMED</strong>.</td>
+</tr>
+<tr>
+<td><strong>ZERO ALL</strong></td>
+<td>Zeroes all axes at the current spot.</td>
+</tr>
+</tbody>
+</table>
+<h3>Overrides</h3>
+<p>Four sliders, each with a button that snaps back to 100 %:</p>
+<table>
+<thead>
+<tr>
+<th>Slider</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>F</strong></td>
+<td>Feed override: scales every cutting feed. Turn it down for the first plunge of a new program, up once you trust it.</td>
+</tr>
+<tr>
+<td><strong>R</strong></td>
+<td>Rapid override.</td>
+</tr>
+<tr>
+<td><strong>S</strong></td>
+<td>Spindle speed override.</td>
+</tr>
+<tr>
+<td><strong>V</strong></td>
+<td>Maximum velocity for all moves.</td>
+</tr>
+</tbody>
+</table>
+<p>The <strong>spindle load</strong> bar shows spindle load when the machine reports it.</p>
+<h3>Spindle and jog</h3>
+<ul>
+<li><strong>FWD / STOP / REV</strong> run the spindle manually at the default speed.</li>
+<li>The <strong>JOG</strong> panel has continuous and step jogging (1, 0.1, 0.01 mm on the reference machine).</li>
+<li>The <strong>JOG / WCS / PLOT / USER</strong> sub-tabs switch the small panel between jog buttons, work-offset buttons, preview options and user buttons.</li>
+<li><strong>MAN / AUTO / MDI</strong> select the machine mode. Probe Basic usually switches for you.</li>
+</ul>
+<h2>The tabs</h2>
+<h3>MAIN</h3>
+<p>The 3D toolpath preview (backplot) and the G-code listing. Preview buttons: ISO / X / Y / Z views, PAN, ZOOM ±, PGM EXT (fit the program), MCH EXT (fit the machine), PATH and CLEAR (the live tool trail), ORTHO/PSPECT.</p>
+<p>The <strong>MDI</strong> sub-page has a keypad, MDI history and RUN FROM LINE controls. <strong>RUN FROM LINE does not restore the state before that line</strong>: position, feeds, work offset, tool, tool length, spindle. Only use it at the start of an operation, where the program sets all of those itself.</p>
+<h3>FILE</h3>
+<p>The file browser for your <code>nc_files</code> folder and USB sticks. <strong>LOAD G-CODE</strong> opens a program. <strong>TO PC / TO USB</strong> copy files. There is also a built-in G-code editor (EDIT G-CODE, FIND/REPLACE, SAVE AS).</p>
+<h3>TOOL</h3>
+<p>The tool table, plus two panels:</p>
+<ul>
+<li><strong>Tool change panel</strong>: <strong>M6 G43</strong> for a tool number. <strong>LOAD SPINDLE / UNLOAD SPINDLE</strong> are for ATC machines.</li>
+<li><strong>Electronic tool setter</strong>: <strong>TOUCH OFF CURRENT TOOL</strong> measures the loaded tool on the setter. See chapter 6.</li>
+</ul>
+<p>Table columns: tool number, pocket, Z (length), diameter, remark, and an <strong>ATC</strong> checkbox. ATC only matters with an automatic tool changer: it marks tools that fit in the carousel, and does nothing on a manual-change machine. <strong>SAVE TABLE</strong> commits your edits.</p>
+<h3>OFFSETS</h3>
+<p>All nine work offsets as a table, plus the current one broken down. See chapter 4.</p>
+<h3>PROBING</h3>
+<p>Two sub-tabs:</p>
+<ul>
+<li><strong>TOUCH PROBE</strong>: the probing parameters, the PROBE RESULTS panel, and the routine pages: OUTSIDE CORNERS, INSIDE CORNERS, BOSS AND POCKET, RIDGE AND VALLEY, EDGE ANGLE, ROTARY AXIS, CALIBRATE and PROBE HELP. See chapter 5.</li>
+<li><strong>TOOL SETTER</strong>: the setter parameters (spindle zero, feeds, travel, retract) and <strong>SET TOOL TOUCH OFF POS</strong>. See chapter 6.</li>
+</ul>
+<h3>CONVERSATIONAL</h3>
+<p>Generates simple programs without CAM: FACING, HOLE OPS (with XY COORD, PATTERN and THREAD MILL), PERIMETER, POCKETS and MISC. See chapter 9.</p>
+<h3>SETTINGS and STATUS</h3>
+<p>SETTINGS holds startup options (which tab opens first), programmable-coolant constants, the spindle-rpm display source and the angular jog link. STATUS shows machine status messages and the error history: look here when something "did nothing".</p><nav class="pager"><span><a href="01-concepts.html">← 1. The two ideas everything rests on</a></span><span><a href="03-first-job.html">3. Your first job, start to finish →</a></span></nav></main></body></html>

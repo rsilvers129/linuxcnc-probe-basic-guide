@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>9. Conversational programming</title><link rel="stylesheet" href="assets/style.css"></head>
+<body><header class="top"><a href="index.html">Probe Basic, Explained</a></header>
+<main><h1>9. Conversational programming</h1>
+<p>The CONVERSATIONAL tab writes simple G-code from a form, with no CAM needed. Its pages:</p>
+<table>
+<thead>
+<tr>
+<th>Page</th>
+<th>Makes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>FACING</strong></td>
+<td>A zig-zag facing program over a rectangle. Good for surfacing a wasteboard or squaring stock.</td>
+</tr>
+<tr>
+<td><strong>HOLE OPS</strong></td>
+<td>Drilling, peck drilling, tapping and boring cycles, at positions from <strong>XY COORD</strong> (a list of points) or <strong>PATTERN</strong> (bolt circles and grids). <strong>THREAD MILL</strong> generates helical thread milling.</td>
+</tr>
+<tr>
+<td><strong>PERIMETER</strong></td>
+<td>A profile around a rectangle or circle.</td>
+</tr>
+<tr>
+<td><strong>POCKETS</strong></td>
+<td>Rectangular and circular pockets.</td>
+</tr>
+<tr>
+<td><strong>MISC</strong></td>
+<td>Smaller utilities.</td>
+</tr>
+</tbody>
+</table>
+<p>The general flow:</p>
+<ol>
+<li>Fill in the tool (number, diameter), spindle speed, feeds, depths and stepovers.</li>
+<li>Fill in the geometry.</li>
+<li>Post the program to a file, or send it straight to the loaded program.</li>
+<li>Check it in the preview like any other program, then set the work offset and run.</li>
+</ol>
+<blockquote>
+<p><strong>On the 6040.</strong> The first real use of the machine after the LinuxCNC conversion was a FACING program to surface the wasteboard: a 1" (25.4 mm) 3-flute surfacing bit over the full usable table. The start and end values are in <strong>work coordinates</strong>, so set the work offset before filling in the form, and check the preview (<strong>PGM EXT</strong>) before running. A wrong sign or an end value outside the travel shows up immediately as a facing area hanging off the table.</p>
+</blockquote><nav class="pager"><span><a href="08-running-programs.html">← 8. Running programs</a></span><span><a href="10-cam.html">10. From CAM to Probe Basic (Fusion 360) →</a></span></nav></main></body></html>

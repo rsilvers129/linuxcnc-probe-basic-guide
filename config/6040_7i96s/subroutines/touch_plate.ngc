@@ -1,0 +1,46 @@
+(Z touch-off with the touch plate, like Mach3's Auto Tool Zero)
+(Setup: plate flat on the stock under the bit, clip on the bit or collet nut,)
+(bit within MAX_TRAVEL above the plate. Spindle OFF.)
+(Probes down fast, backs off, probes again slowly - TWO touches, leave the plate)
+(until the Z zero set message - then sets Z in the active)
+(work offset so the plate top = PLATE_THICKNESS, then lifts clear.)
+(LinuxCNC refuses to start if the probe input is already tripped, and)
+(errors out if nothing is touched within MAX_TRAVEL.)
+
+o<touch_plate> sub
+  #<plate_thickness> = 20.15 (mm - measured by owner 2026-10-19)
+  #<max_travel>      = 50.0  (mm - longest search down from the start height)
+  #<fast_feed>       = 150   (mm/min - first touch)
+  #<slow_feed>       = 25    (mm/min - measuring touch)
+  #<backoff>         = 2.0   (mm - lift between touches)
+  #<lift>            = 10.0  (mm - lift above the plate when done)
+
+  M70          (save modal state: units, G90/G91, feed)
+  G21 G91      (mm, incremental)
+
+  (Search no further than the Z soft limit allows - LinuxCNC rejects a probe move whose)
+  (full length would pass the limit, even if the plate would stop it sooner.)
+  #<room> = [#<_abs_z> - #<_ini[AXIS_Z]MIN_LIMIT> - 0.5]
+  o100 if [#<room> LT 1.0]
+    (abort, Z is too close to its lower limit to probe - jog Z up first)
+  o100 endif
+  #<travel> = #<max_travel>
+  o101 if [#<room> LT #<travel>]
+    #<travel> = #<room>
+  o101 endif
+
+  G38.2 Z[-#<travel>] F#<fast_feed>
+  G1 Z#<backoff> F500
+  #<travel2> = [#<backoff> * 2]
+  #<room2> = [#<_abs_z> - #<_ini[AXIS_Z]MIN_LIMIT> - 0.5]
+  o102 if [#<room2> LT #<travel2>]
+    #<travel2> = #<room2>
+  o102 endif
+  G38.2 Z[-#<travel2>] F#<slow_feed>
+
+  G10 L20 P0 Z#<plate_thickness>   (current spot = plate top, in the active work offset)
+
+  G0 Z#<lift>
+  M72          (restore modal state)
+o<touch_plate> endsub
+M2

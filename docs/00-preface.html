@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Probe Basic, Explained</title><link rel="stylesheet" href="assets/style.css"></head>
+<body><header class="top"><a href="index.html">Probe Basic, Explained</a></header>
+<main><h1>Probe Basic, Explained</h1>
+<p><em>An illustrated guide to running a CNC router or mill with LinuxCNC and the Probe Basic screen, from homing to the last tool change.</em></p>
+<h2>Why this guide exists</h2>
+<p>Probe Basic is one of the best-looking and most capable screens for LinuxCNC. It has a full probing suite, a tool-setter routine, conversational programming and a database tool table. Its official documentation covers installation and configuration well, but the parts a new operator needs most are thin. The interface pages are mostly screenshots with headings, and nothing walks you through a real job from start to finish.</p>
+<p>This guide fills that gap. It was written while setting up and running a real machine: a Chinese 6040 router converted from Mach3 to LinuxCNC with a Mesa 7I96S card. Every procedure here was done on that machine, and every mistake in the troubleshooting chapter actually happened.</p>
+<h2>Who it is for</h2>
+<ul>
+<li><strong>New Probe Basic users</strong> who can start LinuxCNC but are not sure what half the buttons do.</li>
+<li><strong>People coming from Mach3, UCCNC or GRBL senders</strong>, where work offsets and tool lengths work a little differently.</li>
+<li><strong>Anyone (or any AI assistant) who wants to reproduce this exact machine.</strong> The repository holds the complete, working configuration: Mesa firmware, HAL, INI, Modbus spindle control, wiring tables and calibration values. See <em>AGENTS.md</em> in the repository root.</li>
+</ul>
+<h2>Versions</h2>
+<p>Written against:</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Probe Basic</td>
+<td>1.0.3</td>
+</tr>
+<tr>
+<td>QtPyVCP</td>
+<td>6.0.7</td>
+</tr>
+<tr>
+<td>LinuxCNC</td>
+<td>2.9.10 (uspace, PREEMPT_RT)</td>
+</tr>
+<tr>
+<td>OS</td>
+<td>Debian 13 "Trixie"</td>
+</tr>
+</tbody>
+</table>
+<p>Probe Basic changes between versions, so if a button described here is missing on your screen, check the version first.</p>
+<h2>How to read it</h2>
+<p>Chapters 1 to 3 are the core: the two ideas everything rests on (work offsets and tool lengths), a tour of the screen, and a complete first job. After that, use the chapters as a reference.</p>
+<p>Boxes marked <strong>On the 6040</strong> show how the reference machine is set up. Skip them if your machine is different.</p>
+<blockquote>
+<p><strong>Safety.</strong> A CNC machine will do exactly what it is told, including driving a cutter into a vise. Keep a hand near FEED HOLD or the E-stop the first time you run anything, and run new programs slowly, or in the air, first.</p>
+</blockquote>
+<h2>Licence</h2>
+<p>Text and diagrams: Creative Commons Attribution-ShareAlike 4.0. Configuration files: GPL-2.0-or-later, the same as LinuxCNC and Probe Basic, which several of them come from. Probe Basic is by the kcjengr team, and this guide is not affiliated with them.</p><nav class="pager"><span></span><span><a href="01-concepts.html">1. The two ideas everything rests on →</a></span></nav></main></body></html>

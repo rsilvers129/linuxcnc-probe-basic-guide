@@ -1,0 +1,15 @@
+[connection]
+id=mesa-7i96s
+type=ethernet
+interface-name=enp2s0
+autoconnect=true
+
+[ethernet]
+
+[ipv4]
+method=manual
+address1=10.10.10.1/24
+never-default=true
+
+[ipv6]
+method=disabled

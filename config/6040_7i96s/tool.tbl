@@ -1,0 +1,20 @@
+T1 P1 D6.000 Z0 ;6 mm 2-flute upcut flat (grips T1)
+T2 P2 D6.350 Z0 ;1/4in ball, long (grips T2)
+T3 P3 D1.000 Z0 ;tapered ball R0.5 tip, 1/8in shank (grips T3)
+T4 P4 D3.175 Z0 ;1/8in 2-flute upcut flat (grips T4)
+T5 P5 D1.000 Z0 ;tapered ball R0.5 tip (Aspire finish T5) - grips T5 is R0.25
+T6 P6 D3.175 Z0 ;placeholder
+T7 P7 D3.175 Z0 ;placeholder
+T8 P8 D6.350 Z0 ;1/4in ball (Aspire roughing T8)
+T9 P9 D3.175 Z0 ;placeholder
+T10 P10 D3.175 Z0 ;placeholder
+T11 P11 D3.175 Z0 ;placeholder
+T12 P12 D3.175 Z0 ;placeholder
+T13 P13 D3.175 Z0 ;placeholder
+T14 P14 D3.175 Z0 ;placeholder
+T15 P15 D3.175 Z0 ;placeholder
+T16 P16 D3.175 Z0 ;placeholder
+T17 P17 D3.175 Z0 ;placeholder
+T18 P18 D3.175 Z0 ;placeholder
+T19 P19 D3.175 Z0 ;placeholder
+T20 P20 D3.175 Z0 ;placeholder

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Appendix B. The reference machine</title><link rel="stylesheet" href="assets/style.css"></head>
+<body><header class="top"><a href="index.html">Probe Basic, Explained</a></header>
+<main><h1>Appendix B. The reference machine</h1>
+<p>Everything in this guide was done on this machine. The full details are in the repository: <code>hardware/wiring.md</code>, <code>hardware/vfd-mk100.md</code>, <code>firmware/README.md</code>, <code>machine.yaml</code> and the complete configuration in <code>config/6040_7i96s/</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Part</th>
+<th>What</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Machine</td>
+<td>Chinese 6040 router, 5 mm ballscrews, 380 × 567 × 105 mm travel, 4th axis</td>
+</tr>
+<tr>
+<td>Previous controller</td>
+<td>Mach3 + a USB motion card (RnR Eco Motion)</td>
+</tr>
+<tr>
+<td>Controller</td>
+<td>Mesa 7I96S (Ethernet), firmware 7i96s_pktv3</td>
+</tr>
+<tr>
+<td>PC</td>
+<td>Laptop, Intel i7-9750H, Debian 13 + LinuxCNC 2.9.10 PREEMPT_RT; Realtek NIC on r8168-dkms with ASPM/EEE off</td>
+</tr>
+<tr>
+<td>Steppers</td>
+<td>3 × DM542H, 1600 steps/rev, 3.76 A; A axis on a JP-1635A board</td>
+</tr>
+<tr>
+<td>Spindle</td>
+<td>GDZ-80 2.2 kW water-cooled, ER20, 24,000 rpm</td>
+</tr>
+<tr>
+<td>VFD</td>
+<td>MK100-1S2.2G-DK, 110 V, controlled over Modbus RS-485</td>
+</tr>
+<tr>
+<td>Inputs</td>
+<td>One switch per axis (home + limits), touch plate, PGFUN TP05C 3D probe, NC tool setter, NC E-stop</td>
+</tr>
+<tr>
+<td>Pendant</td>
+<td>XHC WHB04B-6 wireless</td>
+</tr>
+<tr>
+<td>Screen</td>
+<td>Probe Basic 1.0.3</td>
+</tr>
+</tbody>
+</table>
+<h2>Calibration results</h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Value</th>
+<th>How</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>X steps/mm</td>
+<td>321.034 (nominal 320)</td>
+<td>Probe + ring gauge + 1-2-3 block in two orientations. X read 0.323 % long.</td>
+</tr>
+<tr>
+<td>Y, Z steps/mm</td>
+<td>320</td>
+<td>The same test showed Y accurate.</td>
+</tr>
+<tr>
+<td>Tool setter repeatability</td>
+<td>about 0.007 mm</td>
+<td>Repeated touch-offs of one tool</td>
+</tr>
+<tr>
+<td>SPINDLE ZERO</td>
+<td>49.1901 mm</td>
+<td>Bare collet nut on the setter</td>
+</tr>
+<tr>
+<td>Probe length (T99)</td>
+<td>46.8736 mm</td>
+<td>On the setter, slow</td>
+</tr>
+<tr>
+<td>Probe ball</td>
+<td>1.998 mm</td>
+<td>Micrometer</td>
+</tr>
+<tr>
+<td>Probe calibration offset</td>
+<td>0.0471 mm</td>
+<td>24.995 mm ring gauge. X and Y differ by backlash.</td>
+</tr>
+</tbody>
+</table>
+<h2>How the conversion went, in brief</h2>
+<ol>
+<li>Built and tested the LinuxCNC config in simulation before the card arrived. Latency test; the Realtek NIC moved to the r8168 driver after r8169 produced packet errors.</li>
+<li>Card on the bench: <code>readhmid</code>, a 30-minute link test with 0 errors.</li>
+<li>Moved the wires from the Mach3 card. Two classic mistakes: a ground wire on the wrong terminal (steppers rough in one direction), and the limit-switch common landed on an input (flickering probe input).</li>
+<li>Rewired the stepper drivers common-anode at 5 V; homing, limits and travel set.</li>
+<li>Flashed PktUART firmware, wired RS-485 to the VFD (with the pair swapped), and set the VFD to standard Modbus (Pd-05 = 31). The spindle ran under LinuxCNC control.</li>
+<li>Added the E-stop, tool setter, 3D probe and pendant; calibrated the setter, probe and X scale.</li>
+<li>First job: a facing program for the wasteboard, then an isogrid plate (plywood test, then aluminum) from Fusion 360.</li>
+</ol><nav class="pager"><span><a href="12-appendix-parameters.html">← Appendix A. Probe Basic parameters (#3000–#3058)</a></span><span></span></nav></main></body></html>

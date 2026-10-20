@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4. The OFFSETS tab</title><link rel="stylesheet" href="assets/style.css"></head>
+<body><header class="top"><a href="index.html">Probe Basic, Explained</a></header>
+<main><h1>4. The OFFSETS tab</h1>
+<p>Chapter 1 explains what a work offset is. This chapter is the screen.</p>
+<h2>The table (left)</h2>
+<p>One row per work coordinate system, in order: <strong>G54, G55, G56, G57, G58, G59, G59.1, G59.2, G59.3</strong>. Columns: <strong>X, Y, Z, A</strong> (the zero point, in machine coordinates) and <strong>R</strong> (rotation in degrees, set by EDGE ANGLE → SET ROTATION WCO).</p>
+<ul>
+<li><strong>SAVE TABLE / RELOAD TABLE</strong> write or re-read the parameter file. Values set by probing or ZERO buttons are already saved; use these after editing cells by hand.</li>
+<li><strong>CLEAR SELECTED / CLEAR ALL</strong> zero offsets. CLEAR ALL wipes every fixture you have set up.</li>
+</ul>
+<h2>Selecting the active offset (right, top)</h2>
+<p>The buttons <strong>G54 … G59.3</strong> select which one is active. The lit one is what programs, probing and the ZERO buttons use. A program can also select one itself with a line like <code>G55</code>, and most CAM posts write <code>G54</code> at the start.</p>
+<h2>The breakdown table (right, bottom)</h2>
+<p>For each axis:</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>SET TO ZERO</strong></td>
+<td>The ZERO button: makes the current position zero in the active offset.</td>
+</tr>
+<tr>
+<td><strong>WC CURRENT POSITION</strong></td>
+<td>Where the tool tip is relative to the part.</td>
+</tr>
+<tr>
+<td><strong>MACHINE COORDS</strong></td>
+<td>Absolute position.</td>
+</tr>
+<tr>
+<td><strong>WC OFFSET</strong></td>
+<td>The active offset's value, the same as the table row.</td>
+</tr>
+<tr>
+<td><strong>G52/G92 OFFSET</strong></td>
+<td>A temporary extra shift. Keep it 0 unless you use G52/G92 on purpose.</td>
+</tr>
+<tr>
+<td><strong>TOOL OFFSET</strong></td>
+<td>The active tool length (Z) from G43.</td>
+</tr>
+</tbody>
+</table>
+<p>They always add up: <strong>WC current = machine − WC offset − G52/G92 − tool offset</strong>.</p>
+<p>Worked example from the reference machine, with the probe (length 46.8736) loaded and G43 on, and Z all the way up:</p>
+<pre><code>Z:  0.000 − (−102.4266) − 0 − 46.8736 = 55.553
+</code></pre>
+<p>So the probe's ball was 55.55 mm above the part's top surface. A ruler confirmed it.</p>
+<h2>Good practice</h2>
+<ul>
+<li><strong>Don't press ZERO buttons you don't mean to.</strong> Each one silently moves your part's zero.</li>
+<li><strong>Use one offset per fixture.</strong> G54 for the vise, G55 for a second vise, G56 for a jig. Then a program for a different fixture just selects its offset, and nothing needs re-probing.</li>
+<li><strong>Write offsets down for repeat fixtures.</strong> If a fixture is pinned to the table, its offset is valid every time you mount it.</li>
+</ul><nav class="pager"><span><a href="03-first-job.html">← 3. Your first job, start to finish</a></span><span><a href="05-probing.html">5. Probing →</a></span></nav></main></body></html>

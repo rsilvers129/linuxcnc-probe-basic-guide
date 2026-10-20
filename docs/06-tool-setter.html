@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>6. The tool setter, and measuring every tool automatically</title><link rel="stylesheet" href="assets/style.css"></head>
+<body><header class="top"><a href="index.html">Probe Basic, Explained</a></header>
+<main><h1>6. The tool setter, and measuring every tool automatically</h1>
+<p>A tool setter is a switch at a fixed spot on the table. Lowering a cutter onto it tells LinuxCNC exactly how far that cutter's tip sits below the spindle reference, which is its tool length. With one, tool changes stop being a source of depth errors.</p>
+<p><img alt="How the tool setter measures tool length" src="diagrams/tool-setter.svg" /></p>
+<h2>One-time setup (PROBING → TOOL SETTER)</h2>
+<h3>1. Wire it to the probe input</h3>
+<p>LinuxCNC has one probe input (<code>motion.probe-input</code>). If you have a 3D probe, a touch plate and a setter, OR them together in HAL so any of them triggers probing. On the reference machine the setter is normally-closed, so its input is inverted (<code>input-06-not</code>) before the OR. See <code>config/6040_7i96s/hallib/6040_7i96s.hal</code>.</p>
+<h3>2. Set the touch-off position (G30)</h3>
+<ol>
+<li>Jog the spindle so its centerline is over the middle of the setter's button.</li>
+<li>Raise Z to the top (machine Z0).</li>
+<li>Press <strong>SET TOOL TOUCH OFF POS</strong>.</li>
+</ol>
+<p>This stores the position as G30 (parameters #5181–#5183). <strong>GO TO G30</strong> returns there.</p>
+<h3>3. Set SPINDLE ZERO (#3010)</h3>
+<p>SPINDLE ZERO is the distance from machine Z0 down to the setter's trigger point, measured with the reference surface: the bare collet nut, or whatever you call "length zero". Probe Basic's own help text says it must be entered as a positive number.</p>
+<ul>
+<li><strong>The direct way</strong>: with no tool in the spindle (nut only), jog down slowly until the setter triggers, and enter the distance travelled.</li>
+<li><strong>PROBE SPINDLE NOSE ZERO</strong> automates this if your spindle nose can safely press the setter.</li>
+</ul>
+<blockquote>
+<p><strong>On the 6040.</strong> SPINDLE ZERO was first worked out from a caliper measurement of a tool's stick-out. That turned out to be 0.565 mm off, because measuring stick-out by caliper is harder than it looks. Measuring with the bare nut (49.1901 mm) fixed it, and every stored tool length and the G54 Z were shifted together by the same amount. Lesson: calibrate the reference directly. Don't derive it from a measured tool.</p>
+</blockquote>
+<h3>4. Feeds and distances</h3>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>#</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fast probe FR</td>
+<td>3004</td>
+<td>First touch. Slow enough that the overshoot after triggering doesn't hurt the setter.</td>
+</tr>
+<tr>
+<td>Slow probe FR</td>
+<td>3005</td>
+<td>Measuring touch. 0 skips it.</td>
+</tr>
+<tr>
+<td>Traverse FR</td>
+<td>3006</td>
+<td>Moves to and from the setter.</td>
+</tr>
+<tr>
+<td>Z max travel</td>
+<td>3007</td>
+<td>How far down it searches before failing. Must reach your shortest tool.</td>
+</tr>
+<tr>
+<td>XY max travel</td>
+<td>3008</td>
+<td>For diameter probing.</td>
+</tr>
+<tr>
+<td>Retract dist</td>
+<td>3009</td>
+<td>Back-off between the two touches.</td>
+</tr>
+<tr>
+<td>TOOL DIAM OFFSET + direction</td>
+<td>3012/3013</td>
+<td>Offsets large tools (face mills) by their radius so the edge, not the empty center, lands on the button.</td>
+</tr>
+</tbody>
+</table>
+<h2>Measuring a tool by hand</h2>
+<p>Load the tool (T box + <strong>M6 G43</strong>, or <code>T5 M6</code> in MDI), then press <strong>TOUCH OFF CURRENT TOOL</strong> on the TOOL tab. The machine:</p>
+<ol>
+<li>lifts to machine Z0 and moves to the G30 position,</li>
+<li>probes down fast, retracts, probes slowly,</li>
+<li>lifts back to Z0,</li>
+<li>stores the length in the tool table, and applies <strong>G43</strong> for that tool.</li>
+</ol>
+<p>Repeatability on the reference machine: about 0.007 mm.</p>
+<h2>Measuring at every tool change (M6 remap)</h2>
+<p>By default, <code>M6</code> in LinuxCNC only asks you to change the tool; it doesn't measure it. Unless you measured each tool beforehand, a program would then run with whatever length is in the table. Changing what M6 does is called a <strong>remap</strong>. This one makes every tool change, from a program, MDI or the M6 G43 button, measure the new tool.</p>
+<p>The subroutine, <code>subroutines/pb_m6_touchoff.ngc</code>:</p>
+<pre><code>o&lt;pb_m6_touchoff&gt; sub
+M5                          (spindle off before anything moves to the setter)
+M6                          (built-in manual change: Z up, insert-tool prompt)
+M66 E0 L0                   (stop read-ahead so the new tool is current)
+o100 if [#&lt;_task&gt; EQ 1]
+  o110 if [[#&lt;selected_tool&gt; GT 0] AND [#&lt;selected_tool&gt; NE #3014]]
+    o&lt;tool_touch_off&gt; call
+  o110 endif
+o100 endif
+o&lt;pb_m6_touchoff&gt; endsub [1]
+M2
+</code></pre>
+<p>And in the INI:</p>
+<pre><code>[RS274NGC]
+REMAP = M6 modalgroup=6 prolog=change_prolog ngc=pb_m6_touchoff epilog=change_epilog
+
+[PYTHON]
+PATH_PREPEND = python
+TOPLEVEL = python/toplevel.py
+</code></pre>
+<p>The <code>python/</code> folder holds LinuxCNC's standard remap glue (<code>toplevel.py</code> → <code>remap.py</code> → <code>stdglue.py</code>). Probe Basic's sample configs already include it.</p>
+<p>Details that matter:</p>
+<ul>
+<li><strong>Inside a remap subroutine, <code>M6</code> means the built-in tool change.</strong> It doesn't call itself.</li>
+<li><strong><code>#&lt;_task&gt; EQ 1</code></strong> is true only when the program really runs. The preview interpreter has <code>_task = 0</code>. Without this guard, the preview tries to "probe", the probe never triggers, and the preview stops after a few lines.</li>
+<li><strong>The probe tool is skipped</strong>, so the setter never presses the probe's stylus. T0 (empty spindle) is skipped too.</li>
+<li><strong><code>endsub [1]</code></strong>: the standard epilog requires the remap to return a value.</li>
+<li><strong>Comments can't contain parentheses.</strong> <code>(T99 (probe))</code> is an error in G-code. The interpreter stops with "nested comment".</li>
+</ul>
+<p>After enabling it, a Fusion 360 program with plain <code>T5 M6</code> lines measures every tool with no edits. See chapter 10.</p><nav class="pager"><span><a href="05-probing.html">← 5. Probing</a></span><span><a href="07-tool-table.html">7. The tool table →</a></span></nav></main></body></html>
