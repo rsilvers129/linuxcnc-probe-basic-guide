@@ -7,7 +7,7 @@ An illustrated guide to **Probe Basic** (the LinuxCNC screen by kcjengr), plus t
 - an E-stop,
 - a wireless pendant.
 
-**Read the guide:** the website (GitHub Pages) · EPUB (Kindle via Send-to-Kindle, Apple Books) · PDF. The links are in `docs/`.
+**Read the guide:** [website](https://rsilvers129.github.io/linuxcnc-probe-basic-guide/) · [EPUB](https://rsilvers129.github.io/linuxcnc-probe-basic-guide/downloads/probe-basic-explained.epub) (Kindle via Send-to-Kindle, Apple Books) · [PDF](https://rsilvers129.github.io/linuxcnc-probe-basic-guide/downloads/probe-basic-explained.pdf)
 
 ## What's here
 
