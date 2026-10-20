@@ -759,7 +759,7 @@ TOOL_DB_FILE = 6040_tools.db
 <li><strong>Put stick-out and collet in the remark</strong>, so the next time you load the tool you set the same length.</li>
 </ul>
 <h2>If LinuxCNC says "tool not found in tool table"</h2>
-<p>The database file is probably fine, but LinuxCNC's in-memory copy isn't. A restart of LinuxCNC reloads it. On the reference machine this happened because a tool process from an earlier LinuxCNC session was still running alongside the new one. Chapter 11 has the full story and the fix.</p>
+<p>The database file is probably fine; LinuxCNC's in-memory copy is not. Reload it, or restart LinuxCNC. On the reference machine, a standalone <code>rs274</code> dry run on the same PC overwrote it. See chapter 11.</p>
 <div style="page-break-before: always"></div><h1>8. Running programs</h1>
 <h2>Starting</h2>
 <p><strong>CYCLE START</strong> runs the loaded program. If it does nothing and the button doesn't highlight when you hover over it, the GUI considers the machine not ready. Check:</p>
@@ -895,9 +895,11 @@ TOOL_DB_FILE = 6040_tools.db
 <p><strong>Cause:</strong> The probe was in the spindle, but G43 wasn't active when you probed. LinuxCNC measured with the collet nut as the reference, so Z0 ended up one probe-length (46.87 mm here) too high.
 <strong>Fix:</strong> Load the probe with <strong>T 99 → M6 G43</strong>, and check that the G43 button is lit and LENGTH shows the probe length. Re-probe, or correct G54 Z by subtracting the probe length.
 <strong>Check:</strong> With the probe loaded and G43 on, the DRO Z equals the ball's real height above the part.</p>
-<h3>"Requested tool 99 not found in tool table" (but it's in the table)</h3>
-<p><strong>Cause:</strong> LinuxCNC's in-memory tool table was corrupted. An <code>io</code> process (and its tool-database backend) from an earlier LinuxCNC session had never exited. Two copies fought over the shared tool-table memory, and a tool-table reload made it visible.
-<strong>Fix:</strong> Close LinuxCNC. Check <code>pgrep -a -f "io -ini"</code>: there should be no <code>io</code> processes left. Kill any leftovers, then start LinuxCNC again. After a restart there should be exactly one <code>io</code> and one <code>tool_db_backend</code>.</p>
+<h3>"Requested tool 18 not found in tool table" (but it is in the table)</h3>
+<p><strong>Cause:</strong> something overwrote LinuxCNC's in-memory tool table. On the reference machine it was the standalone interpreter, <code>rs274</code>, run on the same PC while LinuxCNC was up to dry-test G-code. It shares the live machine's tool-table memory and replaced it with its own. That happened twice: once with an empty table, once with a 3-tool test table, during a running job.
+<strong>Fix:</strong> In MDI or a Python shell, reload the table from the database (<code>linuxcnc.command().load_tool_table()</code>), or restart LinuxCNC. The database file itself is unaffected.
+<strong>Prevent:</strong> never run <code>rs274</code> (or a second LinuxCNC) on the machine's PC while LinuxCNC is running. Dry-test G-code on another computer, or with LinuxCNC closed.
+<strong>Also check:</strong> exactly one <code>io</code> process and one <code>tool_db_backend</code> (<code>pgrep -a -f "io -ini"</code>). A leftover <code>io</code> from a crashed session should be killed with LinuxCNC closed.</p>
 <h3>The preview shows only a few lines of the program</h3>
 <p><strong>Cause:</strong> The program calls a subroutine that probes (a tool touch-off, for example). The preview interpreter can't probe, the routine aborts with "probe failed", and the preview stops there.
 <strong>Fix:</strong> Wrap such calls in <code>o100 if [#&lt;_task&gt; EQ 1]</code> … <code>o100 endif</code>. <code>_task</code> is 1 only in the real run.</p>

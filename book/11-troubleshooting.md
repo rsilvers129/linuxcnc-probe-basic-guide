@@ -6,10 +6,12 @@
 **Fix:** Load the probe with **T 99 → M6 G43**, and check that the G43 button is lit and LENGTH shows the probe length. Re-probe, or correct G54 Z by subtracting the probe length.
 **Check:** With the probe loaded and G43 on, the DRO Z equals the ball's real height above the part.
 
-### "Requested tool 99 not found in tool table" (but it's in the table)
+### "Requested tool 18 not found in tool table" (but it is in the table)
 
-**Cause:** LinuxCNC's in-memory tool table was corrupted. An `io` process (and its tool-database backend) from an earlier LinuxCNC session had never exited. Two copies fought over the shared tool-table memory, and a tool-table reload made it visible.
-**Fix:** Close LinuxCNC. Check `pgrep -a -f "io -ini"`: there should be no `io` processes left. Kill any leftovers, then start LinuxCNC again. After a restart there should be exactly one `io` and one `tool_db_backend`.
+**Cause:** something overwrote LinuxCNC's in-memory tool table. On the reference machine it was the standalone interpreter, `rs274`, run on the same PC while LinuxCNC was up to dry-test G-code. It shares the live machine's tool-table memory and replaced it with its own. That happened twice: once with an empty table, once with a 3-tool test table, during a running job.
+**Fix:** In MDI or a Python shell, reload the table from the database (`linuxcnc.command().load_tool_table()`), or restart LinuxCNC. The database file itself is unaffected.
+**Prevent:** never run `rs274` (or a second LinuxCNC) on the machine's PC while LinuxCNC is running. Dry-test G-code on another computer, or with LinuxCNC closed.
+**Also check:** exactly one `io` process and one `tool_db_backend` (`pgrep -a -f "io -ini"`). A leftover `io` from a crashed session should be killed with LinuxCNC closed.
 
 ### The preview shows only a few lines of the program
 

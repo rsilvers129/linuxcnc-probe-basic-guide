@@ -35,4 +35,4 @@ Edit cells, then **SAVE TABLE**. **ADD TOOL** and **DELETE** manage rows. **UPDA
 
 ## If LinuxCNC says "tool not found in tool table"
 
-The database file is probably fine, but LinuxCNC's in-memory copy isn't. A restart of LinuxCNC reloads it. On the reference machine this happened because a tool process from an earlier LinuxCNC session was still running alongside the new one. Chapter 11 has the full story and the fix.
+The database file is probably fine; LinuxCNC's in-memory copy is not. Reload it, or restart LinuxCNC. On the reference machine, a standalone `rs274` dry run on the same PC overwrote it. See chapter 11.
